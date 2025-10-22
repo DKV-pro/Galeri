@@ -23,19 +23,80 @@
     border-radius: 25px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     overflow: hidden;
+    position: relative;
     display: flex;
     flex-direction: column;
-    position: relative;
   }
 
+  /* ===== HEADER ===== */
   .header {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     padding: 15px;
     font-weight: 600;
     font-size: 20px;
     border-bottom: 1px solid #f3d6dc;
   }
 
+  .menu-btn {
+    position: absolute;
+    left: 15px;
+    cursor: pointer;
+    width: 24px;
+    height: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .menu-btn span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background: #e97b8d;
+    border-radius: 2px;
+  }
+
+  /* ===== SIDEBAR MENU ===== */
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: -200px;
+    width: 200px;
+    height: 100%;
+    background: #ffe4ea;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    border-top-left-radius: 25px;
+    border-bottom-left-radius: 25px;
+    transition: left 0.3s ease;
+    padding: 20px;
+    z-index: 50;
+  }
+
+  .sidebar.active {
+    left: 0;
+  }
+
+  .sidebar h3 {
+    margin-top: 0;
+    color: #e97b8d;
+  }
+
+  .sidebar a {
+    display: block;
+    margin: 10px 0;
+    color: #444;
+    text-decoration: none;
+    font-size: 15px;
+  }
+
+  .sidebar a:hover {
+    color: #e97b8d;
+  }
+
+  /* ===== TAB DAN ALBUM ===== */
   .tabs {
     display: flex;
     justify-content: center;
@@ -139,7 +200,7 @@
     text-align: left;
   }
 
-  /* Fullscreen preview */
+  /* ===== FULLSCREEN PREVIEW ===== */
   .fullscreen {
     position: fixed;
     top: 0; left: 0;
@@ -192,15 +253,32 @@
 <body>
 
   <div class="phone-frame">
-    <div class="header">Gallery</div>
 
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <h3>Menu</h3>
+      <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
+      <a href="#" onclick="closeSidebar()">Tutup Menu</a>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="menu-btn" onclick="toggleSidebar()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      Gallery
+    </div>
+
+    <!-- Tabs -->
     <div class="tabs">
       <div class="tab active">IMAGES</div>
       <div class="tab">ALBUM</div>
       <div class="tab">VIDEO</div>
     </div>
 
-    <!-- List Album -->
+    <!-- Album list -->
     <div class="album-list" id="albumList">
       <div class="album" onclick="openGallery('recent')">
         <img src="https://picsum.photos/100?random=1">
@@ -220,35 +298,17 @@
         <div class="arrow">›</div>
       </div>
 
-      <div class="album" onclick="openGallery('ss')">
-        <img src="https://picsum.photos/100?random=3">
-        <div class="album-info">
-          <h4>ss</h4>
-          <p>7 foto</p>
-        </div>
-        <div class="arrow">›</div>
-      </div>
-
       <div class="album" onclick="openGallery('restor')">
-        <img src="https://picsum.photos/100?random=4">
+        <img src="https://picsum.photos/100?random=3">
         <div class="album-info">
           <h4>Restor</h4>
           <p>102 foto</p>
         </div>
         <div class="arrow">›</div>
       </div>
-
-      <div class="album" onclick="openGallery('whatsapp')">
-        <img src="https://picsum.photos/100?random=5">
-        <div class="album-info">
-          <h4>WhatsApp</h4>
-          <p>999 foto</p>
-        </div>
-        <div class="arrow">›</div>
-      </div>
     </div>
 
-    <!-- Tampilan Galeri -->
+    <!-- Galeri -->
     <div class="gallery-view" id="galleryView">
       <div class="back-btn" onclick="backToAlbums()">← Kembali</div>
       <div class="gallery-grid" id="galleryGrid"></div>
@@ -263,27 +323,33 @@
   </div>
 
 <script>
-  // Ganti dengan ID file Google Drive kamu
+  // === Sidebar Toggle ===
+  function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("active");
+  }
+
+  function closeSidebar() {
+    document.getElementById("sidebar").classList.remove("active");
+  }
+
+  // === Login Menu ===
+  function openLogin() {
+    closeSidebar();
+    alert("Menu Login Pengembang — fitur ini bisa diarahkan ke halaman login.html");
+  }
+
+  // === Data Galeri ===
   const galleries = {
     recent: [
       "https://drive.google.com/uc?id=YOUR_FILE_ID_1",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_2",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_3"
+      "https://drive.google.com/uc?id=YOUR_FILE_ID_2"
     ],
     camera: [
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_4",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_5"
-    ],
-    ss: [
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_6"
+      "https://drive.google.com/uc?id=YOUR_FILE_ID_3",
+      "https://drive.google.com/uc?id=YOUR_FILE_ID_4"
     ],
     restor: [
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_7",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_8"
-    ],
-    whatsapp: [
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_9",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_10"
+      "https://drive.google.com/uc?id=YOUR_FILE_ID_5"
     ]
   };
 
@@ -313,7 +379,7 @@
     document.getElementById('galleryView').classList.remove('active');
   }
 
-  // Fullscreen preview
+  // === Fullscreen View ===
   function openFullscreen(url) {
     const fullscreen = document.getElementById('fullscreen');
     const img = document.getElementById('fullscreenImg');
@@ -325,12 +391,11 @@
     document.getElementById('fullscreen').classList.remove('active');
   }
 
-  // Tutup fullscreen saat klik di luar gambar
   document.getElementById('fullscreen').addEventListener('click', (e) => {
     if (e.target.id === 'fullscreen') closeFullscreen();
   });
 </script>
 
 </body>
-          </html>
-          
+        </html>
+        
