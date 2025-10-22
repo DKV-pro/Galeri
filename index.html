@@ -219,6 +219,7 @@
   <div class="sidebar" id="sidebar">
     <h3>Menu</h3>
     <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
   </div>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -277,6 +278,33 @@
   </div>
 
 <script>
+ // Cek apakah sudah login
+window.onload = function() {
+  const isLoggedIn = localStorage.getItem("isLoggedIn");
+  if (!isLoggedIn) {
+    // Jika belum login, arahkan ke login.html
+    window.location.href = "login.html";
+  } else {
+    // Jika sudah login, aktifkan mode edit (misalnya tombol upload muncul)
+    const uploadBtn = document.createElement('button');
+    uploadBtn.textContent = "📤 Upload Foto";
+    uploadBtn.style.position = "fixed";
+    uploadBtn.style.bottom = "20px";
+    uploadBtn.style.right = "20px";
+    uploadBtn.style.padding = "10px 15px";
+    uploadBtn.style.background = "#e97b8d";
+    uploadBtn.style.color = "white";
+    uploadBtn.style.border = "none";
+    uploadBtn.style.borderRadius = "8px";
+    uploadBtn.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    uploadBtn.style.cursor = "pointer";
+    uploadBtn.onclick = function() {
+      alert("Fitur upload foto pengembang (akan dikembangkan)");
+    };
+    document.body.appendChild(uploadBtn);
+  }
+};
+ 
   const galleries = {
     recent: [
       "https://drive.google.com/uc?id=YOUR_FILE_ID_1",
@@ -350,6 +378,10 @@
   overlay.classList.remove('active');
   setTimeout(() => { window.location.href = "login.html"; }, 200);
   }
+ function logout() {
+  localStorage.removeItem("isLoggedIn");
+  window.location.href = "login.html";
+ }
  
 </script>
 
