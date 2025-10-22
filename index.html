@@ -40,14 +40,13 @@
     font-size: 22px;
     color: #e97b8d;
     cursor: pointer;
-    display: none; /* awalnya disembunyikan */
+    display: none;
   }
 
   header h1 {
     font-size: 18px;
     margin: 0;
     font-weight: 600;
-    display: none;
   }
 
   /* Tabs */
@@ -70,7 +69,6 @@
     line-height: 45px;
     color: #777;
     font-weight: 500;
-    cursor: pointer;
   }
 
   .tab.active {
@@ -219,14 +217,13 @@
   <div class="sidebar" id="sidebar">
     <h3>Menu</h3>
     <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
-    <a href="#" onclick="logout()">🚪 Logout</a>
   </div>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
   <!-- Header -->
   <header>
     <div class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</div>
-    <h1>Gallery</h1>
+    <h1>Galeri</h1>
     <div class="back-btn-header" id="backBtnHeader" onclick="goBack()">←</div>
   </header>
 
@@ -239,32 +236,7 @@
 
   <!-- Album List -->
   <div class="album-list" id="albumList">
-    <div class="album" onclick="openGallery('recent')">
-      <img src="https://picsum.photos/100?random=1">
-      <div class="album-info">
-        <h4>Recent</h4>
-        <p>199 foto</p>
-      </div>
-      <div class="arrow">›</div>
-    </div>
-
-    <div class="album" onclick="openGallery('camera')">
-      <img src="https://picsum.photos/100?random=2">
-      <div class="album-info">
-        <h4>Camera</h4>
-        <p>505 foto</p>
-      </div>
-      <div class="arrow">›</div>
-    </div>
-
-    <div class="album" onclick="openGallery('whatsapp')">
-      <img src="https://picsum.photos/100?random=3">
-      <div class="album-info">
-        <h4>WhatsApp</h4>
-        <p>999 foto</p>
-      </div>
-      <div class="arrow">›</div>
-    </div>
+    <!-- Album akan dimuat otomatis dari data.json -->
   </div>
 
   <!-- Gallery View -->
@@ -278,109 +250,93 @@
   </div>
 
 <script>
-window.onload = function() {
-  const isLoggedIn = localStorage.getItem("isLoggedIn");
-  if (isLoggedIn) {
-    // Jika sudah login, tampilkan fitur pengembang
-    const uploadBtn = document.createElement('button');
-    uploadBtn.textContent = "📤 Upload Foto";
-    uploadBtn.style.position = "fixed";
-    uploadBtn.style.bottom = "20px";
-    uploadBtn.style.right = "20px";
-    uploadBtn.style.padding = "10px 15px";
-    uploadBtn.style.background = "#e97b8d";
-    uploadBtn.style.color = "white";
-    uploadBtn.style.border = "none";
-    uploadBtn.style.borderRadius = "8px";
-    uploadBtn.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
-    uploadBtn.style.cursor = "pointer";
-    uploadBtn.onclick = function() {
-      window.location.href = "admin.html"; // arahkan ke mode pengembang
-    };
-    document.body.appendChild(uploadBtn);
+async function loadGalleryData() {
+  try {
+    const response = await fetch("data.json");
+    const data = await response.json();
+    const albumList = document.getElementById("albumList");
+    albumList.innerHTML = "";
+
+    data.albums.forEach(album => {
+      const div = document.createElement("div");
+      div.className = "album";
+      div.onclick = () => openGallery(album);
+
+      div.innerHTML = `
+        <img src="${album.cover}">
+        <div class="album-info">
+          <h4>${album.name}</h4>
+          <p>${album.photos.length} foto</p>
+        </div>
+        <div class="arrow">›</div>
+      `;
+      albumList.appendChild(div);
+    });
+
+  } catch (err) {
+    console.error("Gagal memuat data galeri:", err);
+    document.getElementById("albumList").innerHTML = "<p style='text-align:center;color:#aaa;'>Tidak ada data galeri.</p>";
   }
-};
- 
-  const galleries = {
-    recent: [
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_1",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_2"
-    ],
-    camera: [
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_3",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_4"
-    ],
-    whatsapp: [
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_5",
-      "https://drive.google.com/uc?id=YOUR_FILE_ID_6"
-    ]
-  };
+}
 
-  function openGallery(name) {
-    document.getElementById('albumList').style.display = 'none';
-    const galleryView = document.getElementById('galleryView');
-    const grid = document.getElementById('galleryGrid');
-    const backBtnHeader = document.getElementById('backBtnHeader');
-    const menuBtn = document.getElementById('menuBtn');
+function openGallery(album) {
+  document.getElementById('albumList').style.display = 'none';
+  const galleryView = document.getElementById('galleryView');
+  const grid = document.getElementById('galleryGrid');
+  const backBtnHeader = document.getElementById('backBtnHeader');
+  const menuBtn = document.getElementById('menuBtn');
 
-    backBtnHeader.style.display = 'block';
-    menuBtn.style.visibility = 'hidden'; // sembunyikan tombol menu
+  backBtnHeader.style.display = 'block';
+  menuBtn.style.visibility = 'hidden';
+  grid.innerHTML = '';
 
-    grid.innerHTML = '';
-    const photos = galleries[name] || [];
-
-    if (photos.length === 0) {
-      grid.innerHTML = "<p style='text-align:center;color:#aaa;'>Tidak ada foto.</p>";
-    } else {
-      photos.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.onclick = () => openFullscreen(url);
-        grid.appendChild(img);
-      });
-    }
-    galleryView.classList.add('active');
+  if (!album.photos || album.photos.length === 0) {
+    grid.innerHTML = "<p style='text-align:center;color:#aaa;'>Tidak ada foto.</p>";
+  } else {
+    album.photos.forEach(url => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.onclick = () => openFullscreen(url);
+      grid.appendChild(img);
+    });
   }
 
-  function goBack() {
-    document.getElementById('albumList').style.display = 'block';
-    document.getElementById('galleryView').classList.remove('active');
-    document.getElementById('backBtnHeader').style.display = 'none';
-    document.getElementById('menuBtn').style.visibility = 'visible';
-  }
+  galleryView.classList.add('active');
+}
 
-  function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
-  }
+function goBack() {
+  document.getElementById('albumList').style.display = 'block';
+  document.getElementById('galleryView').classList.remove('active');
+  document.getElementById('backBtnHeader').style.display = 'none';
+  document.getElementById('menuBtn').style.visibility = 'visible';
+}
 
-  function openFullscreen(url) {
-    const fullscreen = document.getElementById('fullscreen');
-    const img = document.getElementById('fullscreenImg');
-    img.src = url;
-    fullscreen.classList.add('active');
-  }
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
 
-  function closeFullscreen() {
-    document.getElementById('fullscreen').classList.remove('active');
-  }
+function openFullscreen(url) {
+  const fullscreen = document.getElementById('fullscreen');
+  const img = document.getElementById('fullscreenImg');
+  img.src = url;
+  fullscreen.classList.add('active');
+}
 
-  function openLogin() {
+function closeFullscreen() {
+  document.getElementById('fullscreen').classList.remove('active');
+}
+
+function openLogin() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
   sidebar.classList.remove('active');
   overlay.classList.remove('active');
   setTimeout(() => { window.location.href = "login.html"; }, 200);
-  }
- function logout() {
-  localStorage.removeItem("isLoggedIn");
-  window.location.href = "index.html";
- }
- 
+}
+
+loadGalleryData();
 </script>
 
 </body>
- </html>
- 
+</html>
