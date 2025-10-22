@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mode Pengembang - Galeri</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8f8f8;
+      color: #333;
+    }
+
+    header {
+      background: black;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      position: relative;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    #backBtn {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    .section {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-top: 0;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 5px;
+    }
+
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      background: #e97b8d;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #d46b7c;
+    }
+
+    .gallery-preview img, .gallery-preview video {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin: 5px;
+      border-radius: 8px;
+    }
+
+    .logout {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <button id="backBtn" onclick="goBack()">←</button>
+    <h1>Mode Pengembang</h1>
+  </header>
+
+  <main>
+    <div class="section">
+      <h2>Tambah Foto/Video (Google Drive)</h2>
+      <input type="text" id="mediaLink" placeholder="Tempel link Google Drive...">
+      <button onclick="addMedia()">Tambah ke Galeri</button>
+      <div id="galleryPreview" class="gallery-preview"></div>
+    </div>
+
+    <div class="section">
+      <h2>Upload File Langsung</h2>
+      <input type="file" id="fileInput" multiple accept="image/*,video/*">
+      <button onclick="uploadFiles()">Upload</button>
+    </div>
+
+    <div class="logout">
+      <button onclick="logout()">🚪 Logout</button>
+    </div>
+  </main>
+
+  <script>
+    // 🔹 Cek login
+    if (!localStorage.getItem("isLoggedIn")) {
+      window.location.href = "login.html";
+    }
+
+    function goBack() {
+      window.location.href = "index.html";
+    }
+
+    function addMedia() {
+      const link = document.getElementById('mediaLink').value.trim();
+      if (!link) return alert("Masukkan link terlebih dahulu!");
+
+      const preview = document.getElementById('galleryPreview');
+      const element = document.createElement('div');
+
+      if (link.includes("drive.google.com")) {
+        const fileId = link.match(/[-\w]{25,}/);
+        if (fileId) {
+          const img = document.createElement('img');
+          img.src = `https://drive.google.com/uc?id=${fileId[0]}`;
+          preview.appendChild(img);
+        } else {
+          alert("Link Google Drive tidak valid!");
+        }
+      } else {
+        alert("Masukkan link Google Drive yang valid!");
+      }
+
+      document.getElementById('mediaLink').value = "";
+    }
+
+    function uploadFiles() {
+      const files = document.getElementById('fileInput').files;
+      if (files.length === 0) return alert("Pilih file terlebih dahulu.");
+
+      const preview = document.getElementById('galleryPreview');
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          if (file.type.startsWith("image")) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            preview.appendChild(img);
+          } else if (file.type.startsWith("video")) {
+            const vid = document.createElement('video');
+            vid.src = e.target.result;
+            vid.controls = true;
+            preview.appendChild(vid);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem("isLoggedIn");
+      window.location.href = "index.html";
+    }
+  </script>
+
+</body>
+</html>
