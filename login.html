@@ -94,7 +94,7 @@
   <div class="login-box">
     <div class="avatar">👤</div>
     <form id="loginForm" onsubmit="return handleLogin(event)">
-      <input type="text" id="username" placeholder="Username" required>
+      <input type="text" id="username" placeholder="Email" required>
       <input type="password" id="password" placeholder="Password" required>
       <div class="remember">
         <label><input type="checkbox" id="remember"> Remember me</label>
@@ -104,21 +104,60 @@
     </form>
   </div>
 
-<script>
-function handleLogin(event) {
-  event.preventDefault();
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
-  const errorMsg = document.getElementById('errorMsg');
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js"></script>
 
-  // Login sederhana
-  if (username === "admin" && password === "1234") {
-    localStorage.setItem("isLoggedIn", "true"); // simpan status login
-    window.location.href = "admin.html"; // ke halaman utama
-  } else {
-    errorMsg.textContent = "Username atau password salah!";
-  }
-}
-</script>
+  <script>
+    // 🔥 Firebase Configuration (punyamu)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
+      authDomain: "galeridkv-71c50.firebaseapp.com",
+      projectId: "galeridkv-71c50",
+      storageBucket: "galeridkv-71c50.firebasestorage.app",
+      messagingSenderId: "664839362655",
+      appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
+    };
+
+    // Inisialisasi Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Fungsi login pakai Firebase
+    async function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
+
+      try {
+        // Login ke Firebase Auth
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        // Simpan status login
+        localStorage.setItem("isLoggedIn", "true");
+
+        // Arahkan ke halaman admin
+        window.location.href = "admin.html";
+      } catch (error) {
+        console.error(error);
+        // Pesan error yang ramah
+        switch (error.code) {
+          case "auth/invalid-email":
+            errorMsg.textContent = "Format email tidak valid.";
+            break;
+          case "auth/user-not-found":
+            errorMsg.textContent = "Email tidak terdaftar.";
+            break;
+          case "auth/wrong-password":
+            errorMsg.textContent = "Password salah.";
+            break;
+          default:
+            errorMsg.textContent = "Gagal login. Periksa koneksi atau data Anda.";
+        }
+      }
+    }
+  </script>
 </body>
 </html>
