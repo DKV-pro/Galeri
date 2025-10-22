@@ -344,8 +344,13 @@
   }
 
   function openLogin() {
-    alert("Login Pengembang (form login akan ditambahkan).");
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  sidebar.classList.remove('active');
+  overlay.classList.remove('active');
+  setTimeout(() => { window.location.href = "login.html"; }, 200);
   }
+ 
 </script>
 
 </body>
