@@ -66,10 +66,6 @@
     margin-bottom: 20px;
   }
 
-  .login-box .remember input {
-    margin-right: 5px;
-  }
-
   .login-box button {
     width: 100%;
     background: #f28da0;
@@ -87,27 +83,42 @@
     background: #ec7f96;
   }
 
-  .login-box a {
-    text-decoration: none;
-    color: #c06f82;
+  .error {
+    color: red;
     font-size: 13px;
+    margin-top: 5px;
   }
 </style>
 </head>
 <body>
   <div class="login-box">
     <div class="avatar">👤</div>
-    <form>
-      <input type="text" placeholder="Username" required>
-      <input type="password" placeholder="Password" required>
-
+    <form id="loginForm" onsubmit="return handleLogin(event)">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
       <div class="remember">
-        <label><input type="checkbox"> Remember me</label>
-        <a href="#">Forgot Password?</a>
+        <label><input type="checkbox" id="remember"> Remember me</label>
       </div>
-
       <button type="submit">LOGIN</button>
+      <div id="errorMsg" class="error"></div>
     </form>
   </div>
+
+<script>
+function handleLogin(event) {
+  event.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const errorMsg = document.getElementById('errorMsg');
+
+  // Login sederhana
+  if (username === "admin" && password === "1234") {
+    localStorage.setItem("isLoggedIn", "true"); // simpan status login
+    window.location.href = "index.html"; // ke halaman utama
+  } else {
+    errorMsg.textContent = "Username atau password salah!";
+  }
+}
+</script>
 </body>
 </html>
