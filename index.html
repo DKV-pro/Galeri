@@ -278,14 +278,10 @@
   </div>
 
 <script>
- // Cek apakah sudah login
 window.onload = function() {
   const isLoggedIn = localStorage.getItem("isLoggedIn");
-  if (!isLoggedIn) {
-    // Jika belum login, arahkan ke login.html
-    window.location.href = "login.html";
-  } else {
-    // Jika sudah login, aktifkan mode edit (misalnya tombol upload muncul)
+  if (isLoggedIn) {
+    // Jika sudah login, tampilkan fitur pengembang
     const uploadBtn = document.createElement('button');
     uploadBtn.textContent = "📤 Upload Foto";
     uploadBtn.style.position = "fixed";
@@ -299,7 +295,7 @@ window.onload = function() {
     uploadBtn.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
     uploadBtn.style.cursor = "pointer";
     uploadBtn.onclick = function() {
-      alert("Fitur upload foto pengembang (akan dikembangkan)");
+      window.location.href = "admin.html"; // arahkan ke mode pengembang
     };
     document.body.appendChild(uploadBtn);
   }
