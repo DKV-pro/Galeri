@@ -282,37 +282,61 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js"></script>
 
 <script>
-  // 🔥 Firebase Configuration
+  // 🔥 Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
     authDomain: "galeridkv-71c50.firebaseapp.com",
     projectId: "galeridkv-71c50",
-    storageBucket: "galeridkv-71c50.firebasestorage.app",
+    storageBucket: "galeridkv-71c50.appspot.com",
     messagingSenderId: "664839362655",
     appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
   };
 
-  // 🔹 Inisialisasi Firebase
+  // Inisialisasi Firebase
   const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  // 📸 Galeri Manual (link publik)
-  const galleries = {
-    recent: [
-      "https://drive.google.com/uc?export=view&id=1VZo8E5k9xxQ3nlUQJpSGkzSvl9HZqW2R",
-      "https://drive.google.com/uc?export=view&id=1k7b8jQo2bbUBpEzQaxLBnEzAjhjQmY2F"
-    ],
-    camera: [
-      "https://firebasestorage.googleapis.com/v0/b/galeridkv-71c50.appspot.com/o/foto1.jpg?alt=media",
-      "https://firebasestorage.googleapis.com/v0/b/galeridkv-71c50.appspot.com/o/foto2.jpg?alt=media"
-    ],
-    whatsapp: [
-      "https://drive.google.com/uc?export=view&id=1r4VAE0zDYvAl6Txw_5tG5QyzYslCihhX",
-      "https://drive.google.com/uc?export=view&id=1mZK9eW9s5N2F2gE2ybO5UAGzTfS5Gx1k"
-    ]
-  };
+  // 🧠 Muat daftar album dari Firestore
+  async function loadAlbums() {
+    const albumList = document.getElementById("albumList");
+    albumList.innerHTML = "<p style='text-align:center;color:#999;'>Memuat data...</p>";
 
-  // 🖼️ Tampilkan galeri dari kategori
-  function openGallery(name) {
+    try {
+      const snapshot = await db.collection("albums").get();
+
+      if (snapshot.empty) {
+        albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
+        return;
+      }
+
+      albumList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const cover = data.cover || "https://via.placeholder.com/100?text=No+Cover";
+        const name = data.name || "Tanpa Nama";
+        const count = data.photos ? data.photos.length : 0;
+
+        const div = document.createElement("div");
+        div.className = "album";
+        div.innerHTML = `
+          <img src="${cover}">
+          <div class="album-info">
+            <h4>${name}</h4>
+            <p>${count} foto</p>
+          </div>
+          <div class="arrow">›</div>
+        `;
+        div.onclick = () => openGallery(doc.id, data.photos || []);
+        albumList.appendChild(div);
+      });
+    } catch (error) {
+      console.error("Gagal memuat album:", error);
+      albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data.</p>";
+    }
+  }
+
+  // 🖼️ Tampilkan galeri dari Firestore
+  function openGallery(id, photos) {
     document.getElementById('albumList').style.display = 'none';
     const galleryView = document.getElementById('galleryView');
     const grid = document.getElementById('galleryGrid');
@@ -321,11 +345,9 @@
 
     backBtnHeader.style.display = 'block';
     menuBtn.style.visibility = 'hidden';
-
     grid.innerHTML = '';
-    const photos = galleries[name] || [];
 
-    if (photos.length === 0) {
+    if (!photos || photos.length === 0) {
       grid.innerHTML = "<p style='text-align:center;color:#aaa;'>Tidak ada foto.</p>";
     } else {
       photos.forEach(url => {
@@ -335,6 +357,7 @@
         grid.appendChild(img);
       });
     }
+
     galleryView.classList.add('active');
   }
 
@@ -343,13 +366,6 @@
     document.getElementById('galleryView').classList.remove('active');
     document.getElementById('backBtnHeader').style.display = 'none';
     document.getElementById('menuBtn').style.visibility = 'visible';
-  }
-
-  function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
   }
 
   function openFullscreen(url) {
@@ -374,28 +390,10 @@
     window.location.href = "index.html";
   }
 
-  window.onload = function() {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    if (isLoggedIn) {
-      const uploadBtn = document.createElement('button');
-      uploadBtn.textContent = "📤 Upload Foto";
-      uploadBtn.style.position = "fixed";
-      uploadBtn.style.bottom = "20px";
-      uploadBtn.style.right = "20px";
-      uploadBtn.style.padding = "10px 15px";
-      uploadBtn.style.background = "#e97b8d";
-      uploadBtn.style.color = "white";
-      uploadBtn.style.border = "none";
-      uploadBtn.style.borderRadius = "8px";
-      uploadBtn.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
-      uploadBtn.style.cursor = "pointer";
-      uploadBtn.onclick = function() {
-        window.location.href = "admin.html";
-      };
-      document.body.appendChild(uploadBtn);
-    }
-  };
-</script>
+  // Jalankan setelah halaman siap
+  window.onload = loadAlbums;
+                                        </script>
+ 
 </body>
    </html>
    
