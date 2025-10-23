@@ -48,19 +48,25 @@
     object-fit: cover;
     border-radius: 10px;
     cursor: pointer;
-    transition: transform 0.1s ease-in-out;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .gallery img:hover { transform: scale(1.02); }
+  .gallery img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
 
+  /* Fullscreen View */
   .fullscreen {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.95);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 50;
     overflow: hidden;
+    backdrop-filter: blur(6px);
+    transition: background 0.3s ease;
   }
 
   .fullscreen.active { display: flex; }
@@ -69,8 +75,36 @@
     max-width: 90%;
     max-height: 90%;
     border-radius: 10px;
-    transition: transform 0.2s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
   }
+
+  .fullscreen.active img.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Tombol Navigasi */
+  .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 2.5em;
+    cursor: pointer;
+    user-select: none;
+    padding: 0 20px;
+    opacity: 0.6;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .nav-btn:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.2);
+  }
+
+  .prev { left: 10px; }
+  .next { right: 10px; }
 
   .loading, .error, .empty {
     text-align: center;
@@ -90,7 +124,9 @@
 
 <!-- Fullscreen View -->
 <div class="fullscreen" id="fullscreen" onclick="closeFullscreen(event)">
+  <div class="nav-btn prev" onclick="prevImage(event)">❮</div>
   <img id="fullscreenImg">
+  <div class="nav-btn next" onclick="nextImage(event)">❯</div>
 </div>
 
 <script type="module">
@@ -120,7 +156,6 @@
   const galleryEl = document.getElementById("gallery");
   const albumNameEl = document.getElementById("albumName");
 
-  // Variabel global untuk navigasi fullscreen
   let currentIndex = 0;
   let photoList = [];
 
@@ -153,10 +188,7 @@
         return;
       }
 
-      // Simpan semua link ke array global
       photoList = data.photos;
-
-      // === Tampilkan semua gambar ===
       data.photos.forEach((link, index) => {
         const img = document.createElement("img");
         img.src = link;
@@ -172,54 +204,54 @@
     }
   }
 
-  // === Fullscreen + Swipe Navigation ===
   const fullscreen = document.getElementById("fullscreen");
   const fsImg = document.getElementById("fullscreenImg");
 
   window.openFullscreen = function(index) {
     currentIndex = index;
-    fsImg.src = photoList[currentIndex];
+    showImage(currentIndex);
     fullscreen.classList.add("active");
   }
 
   window.closeFullscreen = function(event) {
-    if (event.target.id === "fullscreenImg") return; // klik gambar tidak menutup
+    if (event.target.id === "fullscreenImg") return;
     fullscreen.classList.remove("active");
   }
 
   function showImage(index) {
     if (photoList.length === 0) return;
     currentIndex = (index + photoList.length) % photoList.length;
-    fsImg.src = photoList[currentIndex];
+    fsImg.classList.remove("show");
+    fsImg.style.opacity = "0";
+    setTimeout(() => {
+      fsImg.src = photoList[currentIndex];
+      fsImg.onload = () => fsImg.classList.add("show");
+    }, 150);
   }
 
-  // Deteksi swipe gesture
+  window.nextImage = function(event) {
+    event.stopPropagation();
+    showImage(currentIndex + 1);
+  }
+
+  window.prevImage = function(event) {
+    event.stopPropagation();
+    showImage(currentIndex - 1);
+  }
+
+  // Swipe gesture untuk HP
   let startX = 0;
   let endX = 0;
 
-  fsImg.addEventListener("touchstart", (e) => {
-    startX = e.touches[0].clientX;
-  });
-
+  fsImg.addEventListener("touchstart", (e) => startX = e.touches[0].clientX);
   fsImg.addEventListener("touchend", (e) => {
     endX = e.changedTouches[0].clientX;
-    handleSwipe();
-  });
-
-  function handleSwipe() {
     const diff = endX - startX;
     if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        // Swipe kanan → foto sebelumnya
-        showImage(currentIndex - 1);
-      } else {
-        // Swipe kiri → foto berikutnya
-        showImage(currentIndex + 1);
-      }
+      diff > 0 ? showImage(currentIndex - 1) : showImage(currentIndex + 1);
     }
-  }
+  });
 
-  // Jalankan saat halaman dimuat
   loadGallery();
 </script>
 
