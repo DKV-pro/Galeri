@@ -119,67 +119,97 @@
     </div>
   </main>
 
-  <script>
-    // 🔹 Cek login
-    if (!localStorage.getItem("isLoggedIn")) {
-      window.location.href = "login.html";
-    }
+  <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js"></script>
 
-    function goBack() {
-      window.location.href = "index.html";
-    }
+<script>
+  // 🔥 Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
+    authDomain: "galeridkv-71c50.firebaseapp.com",
+    projectId: "galeridkv-71c50",
+    storageBucket: "galeridkv-71c50.appspot.com",
+    messagingSenderId: "664839362655",
+    appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
+  };
 
-    function addMedia() {
-      const link = document.getElementById('mediaLink').value.trim();
-      if (!link) return alert("Masukkan link terlebih dahulu!");
+  // Inisialisasi
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-      const preview = document.getElementById('galleryPreview');
-      const element = document.createElement('div');
+  // 🔐 Cek login
+  if (!localStorage.getItem("isLoggedIn")) {
+    window.location.href = "login.html";
+  }
 
-      if (link.includes("drive.google.com")) {
-        const fileId = link.match(/[-\w]{25,}/);
-        if (fileId) {
-          const img = document.createElement('img');
-          img.src = `https://drive.google.com/uc?id=${fileId[0]}`;
-          preview.appendChild(img);
-        } else {
-          alert("Link Google Drive tidak valid!");
-        }
+  function goBack() {
+    window.location.href = "index.html";
+  }
+
+  // 🧠 Tambah link ke Firestore
+  async function addMedia() {
+    const link = document.getElementById('mediaLink').value.trim();
+    const siswa = prompt("Masukkan nama siswa (album):");
+    if (!link || !siswa) return alert("Lengkapi nama siswa dan link terlebih dahulu!");
+
+    const fileId = link.match(/[-\w]{25,}/);
+    if (!fileId) return alert("Link Google Drive tidak valid!");
+
+    const imgUrl = `https://drive.google.com/uc?id=${fileId[0]}`;
+
+    try {
+      const docRef = db.collection("albums").doc(siswa);
+      const docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        // Tambah foto ke array yang ada
+        await docRef.update({
+          photos: firebase.firestore.FieldValue.arrayUnion(imgUrl)
+        });
       } else {
-        alert("Masukkan link Google Drive yang valid!");
+        // Buat album baru
+        await docRef.set({
+          name: siswa,
+          cover: imgUrl,
+          photos: [imgUrl]
+        });
       }
 
+      alert("✅ Foto berhasil ditambahkan!");
       document.getElementById('mediaLink').value = "";
+      loadPreview(siswa);
+    } catch (e) {
+      console.error(e);
+      alert("Gagal menyimpan ke Firestore!");
+    }
+  }
+
+  // 🔍 Lihat preview album tertentu
+  async function loadPreview(siswa) {
+    const preview = document.getElementById('galleryPreview');
+    preview.innerHTML = "<p>Memuat...</p>";
+
+    const doc = await db.collection("albums").doc(siswa).get();
+    if (!doc.exists) {
+      preview.innerHTML = "<p>Tidak ada foto.</p>";
+      return;
     }
 
-    function uploadFiles() {
-      const files = document.getElementById('fileInput').files;
-      if (files.length === 0) return alert("Pilih file terlebih dahulu.");
+    const data = doc.data();
+    preview.innerHTML = "";
+    data.photos.forEach(url => {
+      const img = document.createElement("img");
+      img.src = url;
+      preview.appendChild(img);
+    });
+  }
 
-      const preview = document.getElementById('galleryPreview');
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          if (file.type.startsWith("image")) {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            preview.appendChild(img);
-          } else if (file.type.startsWith("video")) {
-            const vid = document.createElement('video');
-            vid.src = e.target.result;
-            vid.controls = true;
-            preview.appendChild(vid);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function logout() {
-      localStorage.removeItem("isLoggedIn");
-      window.location.href = "index.html";
-    }
-  </script>
-
+  // 🚪 Logout
+  function logout() {
+    localStorage.removeItem("isLoggedIn");
+    window.location.href = "index.html";
+  }
+</script>
 </body>
 </html>
