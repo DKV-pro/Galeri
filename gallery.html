@@ -56,11 +56,15 @@
   }
 
   @keyframes fadeUp {
-    to { opacity: 1; transform: translateY(0); }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .gallery img:hover { transform: scale(1.02); }
 
+  /* FULLSCREEN */
   .fullscreen {
     position: fixed;
     inset: 0;
@@ -70,15 +74,19 @@
     align-items: center;
     z-index: 50;
     overflow: hidden;
+    transition: opacity 0.25s ease;
   }
 
-  .fullscreen.active { display: flex; }
+  .fullscreen.active {
+    display: flex;
+    opacity: 1;
+  }
 
   .fullscreen img {
     max-width: 90%;
     max-height: 90%;
     border-radius: 10px;
-    transition: transform 0.2s ease;
+    transition: transform 0.25s ease;
   }
 
   .loading, .error, .empty {
@@ -87,40 +95,51 @@
     margin-top: 100px;
   }
 
-  /* Tombol Like */
+  /* LIKE BUTTON */
   .like-btn {
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     right: 20px;
     background: #ffffffcc;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
     z-index: 100;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, background 0.3s, color 0.3s;
     backdrop-filter: blur(6px);
     user-select: none;
   }
 
+  .like-btn:active {
+    transform: scale(0.9);
+  }
+
   .like-btn.active {
     color: #1976d2;
-    transform: scale(1.1);
+    background: #e3f2fdcc;
+    animation: pop 0.4s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+    100% { transform: scale(1); }
   }
 
   .like-count {
-    position: absolute;
-    bottom: 24px;
-    right: 78px;
+    position: fixed;
+    bottom: 26px;
+    right: 85px;
     font-size: 14px;
     color: #fff;
     background: rgba(0,0,0,0.5);
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 10px;
     user-select: none;
     z-index: 101;
@@ -137,20 +156,16 @@
 <div class="gallery" id="gallery"></div>
 
 <!-- Fullscreen View -->
-<div class="fullscreen" id="fullscreen" onclick="closeFullscreen(event)">
+<div class="fullscreen" id="fullscreen">
   <img id="fullscreenImg">
-  <!-- Tombol Like di dalam fullscreen -->
   <div class="like-btn" id="likeBtn">👍</div>
   <div class="like-count" id="likeCount">0</div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { 
-    getFirestore, doc, getDoc, setDoc, updateDoc, increment 
-  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-  // === Konfigurasi Firebase ===
   const firebaseConfig = {
     apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
     authDomain: "galeridkv-71c50.firebaseapp.com",
@@ -163,14 +178,15 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // === Ambil parameter album ===
-  function getQueryParam(name) {
-    return new URLSearchParams(window.location.search).get(name);
-  }
-
-  const albumId = getQueryParam("id");
+  // Ambil parameter
+  const params = new URLSearchParams(window.location.search);
+  const albumId = params.get("id");
   const galleryEl = document.getElementById("gallery");
   const albumNameEl = document.getElementById("albumName");
+  const fullscreen = document.getElementById("fullscreen");
+  const fsImg = document.getElementById("fullscreenImg");
+  const likeBtn = document.getElementById("likeBtn");
+  const likeCount = document.getElementById("likeCount");
 
   let currentIndex = 0;
   let photoList = [];
@@ -198,20 +214,18 @@
       const data = snap.data();
       albumNameEl.textContent = data.name || albumId;
       galleryEl.innerHTML = "";
+      photoList = data.photos || [];
 
-      if (!data.photos || data.photos.length === 0) {
+      if (photoList.length === 0) {
         galleryEl.innerHTML = "<p class='empty'>Belum ada foto di album ini.</p>";
         return;
       }
 
-      photoList = data.photos;
-
-      data.photos.forEach((link, index) => {
+      photoList.forEach((link, index) => {
         const img = document.createElement("img");
         img.src = link;
-        img.alt = albumId;
         img.loading = "lazy";
-        img.style.animationDelay = `${index * 0.1}s`;
+        img.style.animationDelay = `${index * 0.08}s`;
         img.onclick = () => openFullscreen(index);
         galleryEl.appendChild(img);
       });
@@ -222,39 +236,18 @@
     }
   }
 
-  // === Fullscreen + Swipe ===
-  const fullscreen = document.getElementById("fullscreen");
-  const fsImg = document.getElementById("fullscreenImg");
-
-  window.openFullscreen = (index) => {
+  function openFullscreen(index) {
     currentIndex = index;
     fsImg.src = photoList[currentIndex];
     fullscreen.classList.add("active");
   }
 
-  window.closeFullscreen = (e) => {
-    if (e.target.id === "fullscreenImg") return;
-    fullscreen.classList.remove("active");
-  }
-
-  function showImage(index) {
-    if (photoList.length === 0) return;
-    currentIndex = (index + photoList.length) % photoList.length;
-    fsImg.src = photoList[currentIndex];
-  }
-
-  // Swipe gesture
-  let startX = 0;
-  fsImg.addEventListener("touchstart", (e) => startX = e.touches[0].clientX);
-  fsImg.addEventListener("touchend", (e) => {
-    const diff = e.changedTouches[0].clientX - startX;
-    if (Math.abs(diff) > 50) showImage(currentIndex + (diff < 0 ? 1 : -1));
+  // Tutup hanya jika klik area kosong
+  fullscreen.addEventListener("click", (e) => {
+    if (e.target === fullscreen) fullscreen.classList.remove("active");
   });
 
-  // === LIKE SYSTEM ===
-  const likeBtn = document.getElementById("likeBtn");
-  const likeCount = document.getElementById("likeCount");
-
+  // === SISTEM LIKE TOGGLE ===
   function getDeviceId() {
     let id = localStorage.getItem("device_id");
     if (!id) {
@@ -265,8 +258,8 @@
   }
 
   const deviceId = getDeviceId();
-  let hasLiked = false;
   let totalLikes = 0;
+  let hasLiked = false;
 
   async function loadLikes() {
     try {
@@ -275,43 +268,51 @@
       if (snap.exists()) {
         const data = snap.data();
         totalLikes = data.count || 0;
-        likeCount.textContent = totalLikes;
         hasLiked = data.users?.includes(deviceId) || false;
+        likeCount.textContent = totalLikes;
         if (hasLiked) likeBtn.classList.add("active");
-      } else likeCount.textContent = "0";
+      } else {
+        likeCount.textContent = "0";
+      }
     } catch (err) {
       console.error("loadLikes error:", err);
     }
   }
 
-  async function toggleLike() {
+  async function toggleLike(e) {
+    e.stopPropagation(); // jangan tutup fullscreen
+    const likeRef = doc(db, "likes", albumId);
+
     try {
-      const likeRef = doc(db, "likes", albumId);
       const snap = await getDoc(likeRef);
+      let users = [];
+      let count = 0;
 
       if (snap.exists()) {
         const data = snap.data();
-        const users = data.users || [];
-        if (users.includes(deviceId)) return;
+        users = data.users || [];
+        count = data.count || 0;
+      }
 
-        users.push(deviceId);
-        await updateDoc(likeRef, {
-          count: increment(1),
-          users: users
-        });
-
-        totalLikes++;
-        likeCount.textContent = totalLikes;
-        likeBtn.classList.add("active");
+      if (users.includes(deviceId)) {
+        // === Batalkan Like ===
+        users = users.filter(u => u !== deviceId);
+        count = Math.max(0, count - 1);
+        await updateDoc(likeRef, { count, users });
+        hasLiked = false;
+        totalLikes = count;
+        likeBtn.classList.remove("active");
       } else {
-        await setDoc(likeRef, {
-          count: 1,
-          users: [deviceId]
-        });
-        totalLikes = 1;
-        likeCount.textContent = totalLikes;
+        // === Tambah Like ===
+        users.push(deviceId);
+        count += 1;
+        await setDoc(likeRef, { count, users });
+        hasLiked = true;
+        totalLikes = count;
         likeBtn.classList.add("active");
       }
+
+      likeCount.textContent = totalLikes;
     } catch (err) {
       console.error("toggleLike error:", err);
     }
@@ -319,7 +320,6 @@
 
   likeBtn.addEventListener("click", toggleLike);
 
-  // === Jalankan ===
   loadGallery();
   loadLikes();
 </script>
