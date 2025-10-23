@@ -54,8 +54,6 @@
   }
   .album-info { flex: 1; margin-left: 10px; }
   .album-info h4 { margin: 0; font-size: 15px; font-weight: 600; }
-  .album-info a { font-size: 12px; color: #777; text-decoration: none; }
-  .album-info a:hover { text-decoration: underline; }
 
   .sidebar {
     position: fixed; top: 0; left: -220px;
@@ -125,10 +123,10 @@
           const data = doc.data();
           const div = document.createElement("div");
           div.className = "album";
+          div.onclick = () => openGallery(data.link); // klik container
           div.innerHTML = `
             <div class="album-info">
               <h4>${data.name}</h4>
-              <a href="gallery.html?id=${doc.id}" target="_blank">Buka Album</a>
             </div>
           `;
           albumList.appendChild(div);
@@ -137,6 +135,11 @@
         console.error(e);
         albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
       }
+    }
+
+    // buka halaman gallery
+    function openGallery(link) {
+      window.location.href = `gallery.html?link=${encodeURIComponent(link)}`;
     }
 
     window.openLogin = function() { window.location.href = "login.html"; }
