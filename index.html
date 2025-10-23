@@ -33,7 +33,7 @@
   .album-list {
     margin-top: 70px;
     padding: 10px 15px 80px;
-    perspective: 1000px; /* untuk efek 3D */
+    perspective: 1000px; /* agar efek 3D lebih nyata */
   }
 
   .album {
@@ -45,25 +45,27 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     padding: 10px;
     cursor: pointer;
-    transition: transform 0.1s ease-in-out;
     opacity: 0;
-    transform: rotateY(90deg);
-    animation: flipIn 0.6s ease forwards;
+    transform: rotateX(90deg);
+    animation: flipInBottom 0.6s ease forwards;
+    transition: transform 0.15s ease-in-out;
   }
 
-  /* animasi muncul membalik */
-  @keyframes flipIn {
+  /* animasi flip dari bawah */
+  @keyframes flipInBottom {
     from {
       opacity: 0;
-      transform: rotateY(90deg);
+      transform: rotateX(90deg);
+      transform-origin: bottom;
     }
     to {
       opacity: 1;
-      transform: rotateY(0deg);
+      transform: rotateX(0deg);
+      transform-origin: bottom;
     }
   }
 
-  .album:hover { transform: scale(1.01); }
+  .album:hover { transform: scale(1.02); }
 
   .album img {
     width: 65px; height: 65px;
@@ -146,11 +148,9 @@
               <h4>${data.name}</h4>
             </div>
           `;
-          // efek muncul satu per satu
           div.style.animationDelay = `${delay}s`;
           delay += 0.1;
 
-          // Klik nama = buka gallery.html?id=nama_album
           div.onclick = () => window.location.href = `gallery.html?id=${doc.id}`;
           albumList.appendChild(div);
         });
@@ -161,7 +161,6 @@
     }
 
     window.openLogin = function() { window.location.href = "login.html"; }
-    window.logout = function() { localStorage.removeItem("isLoggedIn"); window.location.href = "index.html"; }
     window.toggleSidebar = function() {
       const sidebar = document.getElementById("sidebar");
       const overlay = document.getElementById("overlay");
