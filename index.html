@@ -107,35 +107,36 @@
     const db = getFirestore(app);
 
     async function loadAlbums() {
-      const albumList = document.getElementById("albumList");
-      albumList.innerHTML = "<p style='text-align:center;color:#999;'>Memuat data...</p>";
+  const albumList = document.getElementById("albumList");
+  albumList.innerHTML = "<p style='text-align:center;color:#999;'>Memuat data...</p>";
 
-      try {
-        const querySnapshot = await getDocs(collection(db, "albums"));
-        albumList.innerHTML = "";
+  try {
+    const querySnapshot = await getDocs(collection(db, "albums"));
+    albumList.innerHTML = "";
 
-        if (querySnapshot.empty) {
-          albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
-          return;
-        }
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          div.className = "album";
-          div.onclick = () => openGallery(data.link); // klik container
-          div.innerHTML = `
-            <div class="album-info">
-              <h4>${data.name}</h4>
-            </div>
-          `;
-          albumList.appendChild(div);
-        });
-      } catch (e) {
-        console.error(e);
-        albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
-      }
+    if (querySnapshot.empty) {
+      albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
+      return;
     }
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const div = document.createElement("div");
+      div.className = "album";
+      div.innerHTML = `
+        <div class="album-info">
+          <h4>${data.name}</h4>
+        </div>
+      `;
+      // Klik nama = buka gallery.html?id=nama_album
+      div.onclick = () => window.location.href = `gallery.html?id=${doc.id}`;
+      albumList.appendChild(div);
+    });
+  } catch (e) {
+    console.error(e);
+    albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
+  }
+   }
 
     // buka halaman gallery
     function openGallery(link) {
