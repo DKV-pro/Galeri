@@ -28,24 +28,10 @@
   }
 
   .menu-btn { font-size: 24px; cursor: pointer; }
-  .back-btn-header { font-size: 22px; color: #e97b8d; cursor: pointer; display: none; }
-
-  .tabs {
-    display: flex;
-    justify-content: space-around;
-    background: #fff;
-    position: fixed;
-    top: 55px;
-    left: 0; right: 0;
-    height: 45px;
-    border-bottom: 1px solid #eee;
-    z-index: 9;
-  }
-  .tab { flex: 1; text-align: center; line-height: 45px; color: #777; cursor: pointer; }
-  .tab.active { color: #e97b8d; border-bottom: 2px solid #e97b8d; }
+  .back-btn-header { display: none; }
 
   .album-list {
-    margin-top: 110px;
+    margin-top: 70px;
     padding: 10px 15px 80px;
   }
 
@@ -68,8 +54,8 @@
   }
   .album-info { flex: 1; margin-left: 10px; }
   .album-info h4 { margin: 0; font-size: 15px; font-weight: 600; }
-  .album-info p { margin: 3px 0 0; font-size: 12px; color: #777; }
-  .arrow { font-size: 20px; color: #aaa; font-weight: bold; }
+  .album-info a { font-size: 12px; color: #777; text-decoration: none; }
+  .album-info a:hover { text-decoration: underline; }
 
   .sidebar {
     position: fixed; top: 0; left: -220px;
@@ -85,23 +71,6 @@
 
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 15; }
   .overlay.active { display: block; }
-
-  .gallery-view { display: none; padding: 70px 15px 60px; }
-  .gallery-view.active { display: block; }
-  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .gallery-grid img {
-    width: 100%; height: 100px;
-    object-fit: cover; border-radius: 8px; cursor: pointer;
-  }
-
-  .fullscreen {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.95);
-    display: none; justify-content: center; align-items: center;
-    z-index: 50;
-  }
-  .fullscreen img { max-width: 90%; max-height: 90%; border-radius: 10px; }
-  .fullscreen.active { display: flex; }
 </style>
 </head>
 <body>
@@ -117,31 +86,12 @@
   <!-- Header -->
   <header>
     <div class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</div>
-    <h1>Gallery</h1>
-    <div class="back-btn-header" id="backBtnHeader" onclick="goBack()">←</div>
+    <div class="back-btn-header" id="backBtnHeader"></div>
   </header>
-
-  <!-- Tabs -->
-  <div class="tabs">
-    <div class="tab active">IMAGES</div>
-    <div class="tab">ALBUM</div>
-    <div class="tab">VIDEO</div>
-  </div>
 
   <!-- Album List -->
   <div class="album-list" id="albumList"></div>
 
-  <!-- Gallery View -->
-  <div class="gallery-view" id="galleryView">
-    <div class="gallery-grid" id="galleryGrid"></div>
-  </div>
-
-  <!-- Fullscreen Preview -->
-  <div class="fullscreen" id="fullscreen" onclick="closeFullscreen()">
-    <img id="fullscreenImg">
-  </div>
-
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -172,75 +122,25 @@
         }
 
         querySnapshot.forEach((doc) => {
-  const data = doc.data();
-  const div = document.createElement("div");
-  div.className = "album";
-  div.innerHTML = `
-    <div class="album-info">
-      <h4>${data.name}</h4>
-      <a href="${data.link}" target="_blank">Buka Google Drive</a>
-    </div>
-  `;
-  albumList.appendChild(div);
-});
+          const data = doc.data();
+          const div = document.createElement("div");
+          div.className = "album";
+          div.innerHTML = `
+            <div class="album-info">
+              <h4>${data.name}</h4>
+              <a href="gallery.html?id=${doc.id}" target="_blank">Buka Album</a>
+            </div>
+          `;
+          albumList.appendChild(div);
+        });
       } catch (e) {
         console.error(e);
         albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
       }
     }
 
-    window.openGallery = function(id, photos) {
-      document.getElementById('albumList').style.display = 'none';
-      const galleryView = document.getElementById('galleryView');
-      const grid = document.getElementById('galleryGrid');
-      const backBtnHeader = document.getElementById('backBtnHeader');
-      const menuBtn = document.getElementById('menuBtn');
-
-      backBtnHeader.style.display = 'block';
-      menuBtn.style.visibility = 'hidden';
-      grid.innerHTML = '';
-
-      if (!photos || photos.length === 0) {
-        grid.innerHTML = "<p style='text-align:center;color:#aaa;'>Tidak ada foto.</p>";
-      } else {
-        photos.forEach(url => {
-          const img = document.createElement('img');
-          img.src = url;
-          img.onclick = () => openFullscreen(url);
-          grid.appendChild(img);
-        });
-      }
-
-      galleryView.classList.add('active');
-    }
-
-    window.goBack = function() {
-      document.getElementById('albumList').style.display = 'block';
-      document.getElementById('galleryView').classList.remove('active');
-      document.getElementById('backBtnHeader').style.display = 'none';
-      document.getElementById('menuBtn').style.visibility = 'visible';
-    }
-
-    window.openFullscreen = function(url) {
-      const fullscreen = document.getElementById('fullscreen');
-      const img = document.getElementById('fullscreenImg');
-      img.src = url;
-      fullscreen.classList.add('active');
-    }
-
-    window.closeFullscreen = function() {
-      document.getElementById('fullscreen').classList.remove('active');
-    }
-
-    window.openLogin = function() {
-      window.location.href = "login.html";
-    }
-
-    window.logout = function() {
-      localStorage.removeItem("isLoggedIn");
-      window.location.href = "index.html";
-    }
-
+    window.openLogin = function() { window.location.href = "login.html"; }
+    window.logout = function() { localStorage.removeItem("isLoggedIn"); window.location.href = "index.html"; }
     window.toggleSidebar = function() {
       const sidebar = document.getElementById("sidebar");
       const overlay = document.getElementById("overlay");
