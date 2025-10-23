@@ -33,6 +33,7 @@
   .album-list {
     margin-top: 70px;
     padding: 10px 15px 80px;
+    perspective: 1000px; /* untuk efek 3D */
   }
 
   .album {
@@ -42,11 +43,28 @@
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    padding: 8px;
+    padding: 10px;
     cursor: pointer;
     transition: transform 0.1s ease-in-out;
+    opacity: 0;
+    transform: rotateY(90deg);
+    animation: flipIn 0.6s ease forwards;
   }
+
+  /* animasi muncul membalik */
+  @keyframes flipIn {
+    from {
+      opacity: 0;
+      transform: rotateY(90deg);
+    }
+    to {
+      opacity: 1;
+      transform: rotateY(0deg);
+    }
+  }
+
   .album:hover { transform: scale(1.01); }
+
   .album img {
     width: 65px; height: 65px;
     border-radius: 12px;
@@ -77,7 +95,6 @@
   <div class="sidebar" id="sidebar">
     <h3>Menu</h3>
     <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
-    <a href="#" onclick="logout()">🚪 Logout</a>
   </div>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -107,40 +124,40 @@
     const db = getFirestore(app);
 
     async function loadAlbums() {
-  const albumList = document.getElementById("albumList");
-  albumList.innerHTML = "<p style='text-align:center;color:#999;'>Memuat data...</p>";
+      const albumList = document.getElementById("albumList");
+      albumList.innerHTML = "<p style='text-align:center;color:#999;'>Memuat data...</p>";
 
-  try {
-    const querySnapshot = await getDocs(collection(db, "albums"));
-    albumList.innerHTML = "";
+      try {
+        const querySnapshot = await getDocs(collection(db, "albums"));
+        albumList.innerHTML = "";
 
-    if (querySnapshot.empty) {
-      albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
-      return;
-    }
+        if (querySnapshot.empty) {
+          albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
+          return;
+        }
 
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.className = "album";
-      div.innerHTML = `
-        <div class="album-info">
-          <h4>${data.name}</h4>
-        </div>
-      `;
-      // Klik nama = buka gallery.html?id=nama_album
-      div.onclick = () => window.location.href = `gallery.html?id=${doc.id}`;
-      albumList.appendChild(div);
-    });
-  } catch (e) {
-    console.error(e);
-    albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
-  }
-   }
+        let delay = 0;
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const div = document.createElement("div");
+          div.className = "album";
+          div.innerHTML = `
+            <div class="album-info">
+              <h4>${data.name}</h4>
+            </div>
+          `;
+          // efek muncul satu per satu
+          div.style.animationDelay = `${delay}s`;
+          delay += 0.1;
 
-    // buka halaman gallery
-    function openGallery(link) {
-      window.location.href = `gallery.html?link=${encodeURIComponent(link)}`;
+          // Klik nama = buka gallery.html?id=nama_album
+          div.onclick = () => window.location.href = `gallery.html?id=${doc.id}`;
+          albumList.appendChild(div);
+        });
+      } catch (e) {
+        console.error(e);
+        albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
+      }
     }
 
     window.openLogin = function() { window.location.href = "login.html"; }
