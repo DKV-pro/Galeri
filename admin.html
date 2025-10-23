@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mode Pengembang</title>
+
   <script type="module">
-    // --- Firebase setup ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { 
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, arrayUnion 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
       authDomain: "galeridkv-71c50.firebaseapp.com",
       projectId: "galeridkv-71c50",
-      storageBucket: "galeridkv-71c50.firebasestorage.app",
+      storageBucket: "galeridkv-71c50.appspot.com",
       messagingSenderId: "664839362655",
       appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
     };
@@ -21,7 +23,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- DOM elements ---
+    // Elemen
     const siswaSelect = document.getElementById("siswaSelect");
     const linkInput = document.getElementById("driveLink");
     const addBtn = document.getElementById("addBtn");
@@ -29,44 +31,29 @@
     const namaBaruInput = document.getElementById("namaBaru");
     const addNamaBtn = document.getElementById("addNamaBtn");
 
-    // --- Tambah link ke Firestore ---
-    async function tambahData() {
-      const nama = siswaSelect.value;
-      const link = linkInput.value.trim();
-
-      if (!nama || !link) {
-        alert("Lengkapi nama siswa dan link Google Drive!");
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, "galeri"), { nama, link });
-        linkInput.value = "";
-        alert("✅ Data berhasil ditambahkan!");
-        tampilkanData();
-      } catch (err) {
-        console.error("Gagal menambah data:", err);
-      }
-    }
-
-    // --- Tambah nama siswa baru ---
+    // Tambah nama siswa baru (buat album baru di Firestore)
     async function tambahNamaBaru() {
-      const namaBaru = namaBaruInput.value.trim();
-      if (!namaBaru) return alert("Masukkan nama siswa terlebih dahulu!");
+      const nama = namaBaruInput.value.trim();
+      if (!nama) return alert("Masukkan nama siswa terlebih dahulu!");
 
-      // Simpan di koleksi 'siswa'
-      await setDoc(doc(db, "siswa", namaBaru), { nama: namaBaru });
+      const ref = doc(db, "albums", nama);
+      await setDoc(ref, {
+        name: nama,
+        cover: "https://via.placeholder.com/100?text=" + encodeURIComponent(nama),
+        photos: []
+      });
+
       namaBaruInput.value = "";
-      alert("✅ Nama siswa ditambahkan!");
+      alert("✅ Album baru dibuat!");
       muatDaftarSiswa();
     }
 
-    // --- Muat daftar nama siswa dari Firestore ---
+    // Muat daftar siswa (album)
     async function muatDaftarSiswa() {
       siswaSelect.innerHTML = `<option value="">Pilih Nama Siswa</option>`;
-      const snapshot = await getDocs(collection(db, "siswa"));
+      const snapshot = await getDocs(collection(db, "albums"));
       snapshot.forEach((docSnap) => {
-        const nama = docSnap.data().nama;
+        const nama = docSnap.data().name;
         const opt = document.createElement("option");
         opt.value = nama;
         opt.textContent = nama;
@@ -74,48 +61,65 @@
       });
     }
 
-    // --- Tampilkan data dari Firestore ---
+    // Tambah link ke album (update array)
+    async function tambahData() {
+      const nama = siswaSelect.value;
+      const link = linkInput.value.trim();
+      if (!nama || !link) return alert("Pilih nama siswa dan isi link!");
+
+      const ref = doc(db, "albums", nama);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        await updateDoc(ref, { photos: arrayUnion(link) });
+      } else {
+        await setDoc(ref, {
+          name: nama,
+          cover: "https://via.placeholder.com/100?text=" + encodeURIComponent(nama),
+          photos: [link]
+        });
+      }
+
+      linkInput.value = "";
+      alert("✅ Link berhasil ditambahkan!");
+      tampilkanData();
+    }
+
+    // Tampilkan data semua album
     async function tampilkanData() {
       listContainer.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "galeri"));
-      querySnapshot.forEach((docSnap) => {
+      const snapshot = await getDocs(collection(db, "albums"));
+      snapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const item = document.createElement("div");
         item.className = "item";
+        const photoCount = data.photos ? data.photos.length : 0;
+
         item.innerHTML = `
           <div>
-            <b>🎓 ${data.nama}</b><br>
-            <a href="${data.link}" target="_blank">${data.link}</a>
+            <b>📁 ${data.name}</b><br>
+            <small>${photoCount} file</small>
           </div>
           <div class="actions">
-            <button onclick="editData('${docSnap.id}', '${data.nama}', '${data.link}')">✏️</button>
-            <button onclick="hapusData('${docSnap.id}')">🗑️</button>
+            <button onclick="hapusAlbum('${docSnap.id}')">🗑️</button>
           </div>
         `;
         listContainer.appendChild(item);
       });
     }
 
-    // --- Hapus data galeri ---
-    window.hapusData = async function(id) {
-      if (confirm("Yakin ingin menghapus data ini?")) {
-        await deleteDoc(doc(db, "galeri", id));
+    // Hapus seluruh album
+    window.hapusAlbum = async function(id) {
+      if (confirm("Yakin ingin menghapus album ini?")) {
+        await deleteDoc(doc(db, "albums", id));
         tampilkanData();
       }
     };
 
-    // --- Edit data galeri ---
-    window.editData = async function(id, nama, link) {
-      const newLink = prompt("Edit link Google Drive:", link);
-      if (newLink && newLink !== link) {
-        await updateDoc(doc(db, "galeri", id), { link: newLink });
-        tampilkanData();
-      }
-    };
-
-    // --- Event ---
-    addBtn.addEventListener("click", tambahData);
+    // Event
     addNamaBtn.addEventListener("click", tambahNamaBaru);
+    addBtn.addEventListener("click", tambahData);
+
     window.onload = () => {
       muatDaftarSiswa();
       tampilkanData();
@@ -129,7 +133,6 @@
       margin: 0;
       padding: 20px;
     }
-
     h2 {
       text-align: center;
       background: #000;
@@ -137,7 +140,6 @@
       padding: 15px;
       border-radius: 10px;
     }
-
     .card {
       background: white;
       padding: 20px;
@@ -145,7 +147,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-
     select, input {
       width: 100%;
       padding: 10px;
@@ -153,7 +154,6 @@
       border-radius: 8px;
       margin-top: 10px;
     }
-
     button {
       background: #e57373;
       color: white;
@@ -163,15 +163,12 @@
       margin-top: 10px;
       cursor: pointer;
     }
-
     button:hover {
       background: #d32f2f;
     }
-
     #dataList {
       margin-top: 20px;
     }
-
     .item {
       background: #fff;
       border-radius: 10px;
@@ -182,13 +179,11 @@
       align-items: center;
       box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
-
     .actions button {
       margin-left: 5px;
       font-size: 16px;
       padding: 5px 8px;
     }
-
     .flex {
       display: flex;
       gap: 10px;
@@ -200,24 +195,24 @@
   <h2>Mode Pengembang</h2>
 
   <div class="card">
-    <h3>Tambah Nama Siswa Baru</h3>
+    <h3>Tambah Album Baru (Nama Siswa)</h3>
     <div class="flex">
-      <input type="text" id="namaBaru" placeholder="Masukkan nama siswa baru...">
+      <input type="text" id="namaBaru" placeholder="Masukkan nama siswa baru..." />
       <button id="addNamaBtn">Tambah</button>
     </div>
   </div>
 
   <div class="card">
-    <h3>Tambah Foto/Video (Google Drive)</h3>
+    <h3>Tambah Link ke Album</h3>
     <select id="siswaSelect">
-      <option value="">Memuat data siswa...</option>
+      <option value="">Memuat daftar album...</option>
     </select>
-    <input type="text" id="driveLink" placeholder="Tempel link Google Drive...">
-    <button id="addBtn">Tambah ke Galeri</button>
+    <input type="text" id="driveLink" placeholder="Tempel link Google Drive..." />
+    <button id="addBtn">Tambahkan</button>
   </div>
 
   <div id="dataList"></div>
 
-  <button style="display:block;margin:20px auto;">🚪 Logout</button>
+  <button style="display:block;margin:20px auto;" onclick="location.href='index.html'">🏠 Kembali ke Galeri</button>
 </body>
 </html>
