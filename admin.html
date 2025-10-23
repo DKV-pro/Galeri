@@ -3,213 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mode Pengembang - Galeri</title>
+  <title>Mode Pengembang</title>
+  <script type="module">
+    // --- Firebase setup ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
+      authDomain: "galeridkv-71c50.firebaseapp.com",
+      projectId: "galeridkv-71c50",
+      storageBucket: "galeridkv-71c50.firebasestorage.app",
+      messagingSenderId: "664839362655",
+      appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- DOM elements ---
+    const siswaSelect = document.getElementById("siswaSelect");
+    const linkInput = document.getElementById("driveLink");
+    const addBtn = document.getElementById("addBtn");
+    const listContainer = document.getElementById("dataList");
+
+    // --- Tambahkan data ke Firestore ---
+    async function tambahData() {
+      const nama = siswaSelect.value;
+      const link = linkInput.value.trim();
+
+      if (!nama || !link) {
+        alert("Lengkapi nama siswa dan link Google Drive!");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "galeri"), { nama, link });
+        linkInput.value = "";
+        alert("✅ Data berhasil ditambahkan!");
+        tampilkanData();
+      } catch (err) {
+        console.error("Gagal menambah data:", err);
+      }
+    }
+
+    // --- Tampilkan data dari Firestore ---
+    async function tampilkanData() {
+      listContainer.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "galeri"));
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const item = document.createElement("div");
+        item.className = "item";
+        item.innerHTML = `
+          <div>
+            <b>🎓 ${data.nama}</b><br>
+            <a href="${data.link}" target="_blank">${data.link}</a>
+          </div>
+          <div class="actions">
+            <button onclick="editData('${docSnap.id}', '${data.nama}', '${data.link}')">✏️</button>
+            <button onclick="hapusData('${docSnap.id}')">🗑️</button>
+          </div>
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+
+    // --- Hapus data ---
+    window.hapusData = async function(id) {
+      if (confirm("Yakin ingin menghapus data ini?")) {
+        await deleteDoc(doc(db, "galeri", id));
+        tampilkanData();
+      }
+    };
+
+    // --- Edit data ---
+    window.editData = async function(id, nama, link) {
+      const newLink = prompt("Edit link Google Drive:", link);
+      if (newLink && newLink !== link) {
+        await updateDoc(doc(db, "galeri", id), { link: newLink });
+        tampilkanData();
+      }
+    };
+
+    // --- Event ---
+    addBtn.addEventListener("click", tambahData);
+    window.onload = tampilkanData;
+  </script>
+
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f7f7;
       margin: 0;
-      padding: 0;
-      background: #f8f8f8;
-      color: #333;
-    }
-
-    header {
-      background: black;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      position: relative;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    #backBtn {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    main {
       padding: 20px;
     }
 
-    .section {
-      background: white;
+    h2 {
+      text-align: center;
+      background: #000;
+      color: #fff;
       padding: 15px;
       border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
 
-    h2 {
-      font-size: 18px;
-      margin-top: 0;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 5px;
-    }
-
-    input[type="text"], input[type="file"] {
+    select, input {
       width: 100%;
       padding: 10px;
-      margin: 8px 0;
       border: 1px solid #ccc;
       border-radius: 8px;
+      margin-top: 10px;
     }
 
     button {
-      background: #e97b8d;
+      background: #e57373;
       color: white;
-      padding: 10px 15px;
       border: none;
+      padding: 10px 20px;
       border-radius: 8px;
+      margin-top: 10px;
       cursor: pointer;
     }
 
     button:hover {
-      background: #d46b7c;
+      background: #d32f2f;
     }
 
-    .gallery-preview img, .gallery-preview video {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      margin: 5px;
-      border-radius: 8px;
+    #dataList {
+      margin-top: 20px;
     }
 
-    .logout {
-      text-align: center;
-      margin-top: 30px;
+    .item {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
 
+    .actions button {
+      margin-left: 5px;
+      font-size: 16px;
+      padding: 5px 8px;
+    }
   </style>
 </head>
 <body>
+  <h2>Mode Pengembang</h2>
 
-  <header>
-    <button id="backBtn" onclick="goBack()">←</button>
-    <h1>Mode Pengembang</h1>
-  </header>
+  <div class="card">
+    <h3>Tambah Foto/Video (Google Drive)</h3>
+    <select id="siswaSelect">
+      <option value="">Pilih Nama Siswa</option>
+      <option>Andi</option>
+      <option>Budi</option>
+      <option>Citra</option>
+      <option>Dewi</option>
+      <option>Fajar</option>
+    </select>
+    <input type="text" id="driveLink" placeholder="Tempel link Google Drive...">
+    <button id="addBtn">Tambah ke Galeri</button>
+  </div>
 
-  <main>
-    <div class="section">
-      <h2>Tambah Foto/Video (Google Drive)</h2>
-      <input type="text" id="mediaLink" placeholder="Tempel link Google Drive...">
-      <button onclick="addMedia()">Tambah ke Galeri</button>
-      <div id="galleryPreview" class="gallery-preview"></div>
-    </div>
+  <div id="dataList"></div>
 
-    <div class="section">
-      <h2>Upload File Langsung</h2>
-      <input type="file" id="fileInput" multiple accept="image/*,video/*">
-      <button onclick="uploadFiles()">Upload</button>
-    </div>
-
-    <div class="logout">
-      <button onclick="logout()">🚪 Logout</button>
-    </div>
-  </main>
-
-  <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js"></script>
-
-<script>
-  // 🔥 Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
-    authDomain: "galeridkv-71c50.firebaseapp.com",
-    projectId: "galeridkv-71c50",
-    storageBucket: "galeridkv-71c50.appspot.com",
-    messagingSenderId: "664839362655",
-    appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
-  };
-
-  // Inisialisasi
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  // 🔐 Cek login
-  if (!localStorage.getItem("isLoggedIn")) {
-    window.location.href = "login.html";
-  }
-
-  function goBack() {
-    window.location.href = "index.html";
-  }
-
-  // 🧠 Tambah link ke Firestore
-  async function addMedia() {
-    const link = document.getElementById('mediaLink').value.trim();
-    const siswa = prompt("Masukkan nama siswa (album):");
-    if (!link || !siswa) return alert("Lengkapi nama siswa dan link terlebih dahulu!");
-
-    const fileId = link.match(/[-\w]{25,}/);
-    if (!fileId) return alert("Link Google Drive tidak valid!");
-
-    const imgUrl = `https://drive.google.com/uc?id=${fileId[0]}`;
-
-    try {
-      const docRef = db.collection("albums").doc(siswa);
-      const docSnap = await docRef.get();
-
-      if (docSnap.exists) {
-        // Tambah foto ke array yang ada
-        await docRef.update({
-          photos: firebase.firestore.FieldValue.arrayUnion(imgUrl)
-        });
-      } else {
-        // Buat album baru
-        await docRef.set({
-          name: siswa,
-          cover: imgUrl,
-          photos: [imgUrl]
-        });
-      }
-
-      alert("✅ Foto berhasil ditambahkan!");
-      document.getElementById('mediaLink').value = "";
-      loadPreview(siswa);
-    } catch (e) {
-      console.error(e);
-      alert("Gagal menyimpan ke Firestore!");
-    }
-  }
-
-  // 🔍 Lihat preview album tertentu
-  async function loadPreview(siswa) {
-    const preview = document.getElementById('galleryPreview');
-    preview.innerHTML = "<p>Memuat...</p>";
-
-    const doc = await db.collection("albums").doc(siswa).get();
-    if (!doc.exists) {
-      preview.innerHTML = "<p>Tidak ada foto.</p>";
-      return;
-    }
-
-    const data = doc.data();
-    preview.innerHTML = "";
-    data.photos.forEach(url => {
-      const img = document.createElement("img");
-      img.src = url;
-      preview.appendChild(img);
-    });
-  }
-
-  // 🚪 Logout
-  function logout() {
-    localStorage.removeItem("isLoggedIn");
-    window.location.href = "index.html";
-  }
-</script>
+  <button style="display:block;margin:20px auto;">🚪 Logout</button>
 </body>
 </html>
