@@ -113,21 +113,22 @@
     text-align: center;
     z-index: 30;
     color: #666;
-    font-size: 12px;
-    line-height: 1.3;
+    font-weight: 400;
     user-select: none;
     pointer-events: none; /* supaya tidak ganggu klik album */
     animation: fadeInFooter 1.5s ease;
+    white-space: nowrap; /* tetap satu baris */
+    font-size: clamp(10px, 2.5vw, 14px); /* otomatis mengecil di layar kecil */
   }
+
+  .footer-fixed b {
+    color: #222;
+    font-weight: 600;
+               }
 
   @keyframes fadeInFooter {
     from { opacity: 0; transform: translate(-50%, 20px); }
     to { opacity: 1; transform: translate(-50%, 0); }
-  }
-
-  .footer-fixed b {
-    font-weight: 600;
-    color: #222;
   }
 </style>
 </head>
