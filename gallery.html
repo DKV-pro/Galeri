@@ -26,6 +26,43 @@
     justify-content: space-between;
     user-select: none;
   }
+ .like-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #ffffffcc;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+  user-select: none;
+}
+
+.like-btn.active {
+  color: #1976d2;
+  transform: scale(1.1);
+}
+
+.like-count {
+  position: fixed;
+  bottom: 24px;
+  right: 78px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(0,0,0,0.5);
+  padding: 2px 8px;
+  border-radius: 10px;
+  user-select: none;
+  z-index: 101;
+}
 
   .back-btn { cursor: pointer; font-size: 22px; color: #e57373; }
   .album-name {
@@ -103,6 +140,9 @@
 <div class="fullscreen" id="fullscreen" onclick="closeFullscreen(event)">
   <img id="fullscreenImg">
 </div>
+ <!-- Tombol Like -->
+<div class="like-btn" id="likeBtn">👍</div>
+<div class="like-count" id="likeCount">0</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -230,9 +270,87 @@
       }
     }
   }
+ import { doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+// === LIKE SYSTEM ===
+const likeBtn = document.getElementById("likeBtn");
+const likeCount = document.getElementById("likeCount");
+
+// Buat ID unik per perangkat (disimpan di localStorage)
+function getDeviceId() {
+  let id = localStorage.getItem("device_id");
+  if (!id) {
+    id = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem("device_id", id);
+  }
+  return id;
+}
+
+const deviceId = getDeviceId();
+let hasLiked = false;
+let totalLikes = 0;
+
+async function loadLikes() {
+  try {
+    const likeRef = doc(db, "likes", albumId);
+    const snap = await getDoc(likeRef);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      totalLikes = data.count || 0;
+      likeCount.textContent = totalLikes;
+      hasLiked = data.users?.includes(deviceId) || false;
+      if (hasLiked) likeBtn.classList.add("active");
+    } else {
+      likeCount.textContent = "0";
+    }
+  } catch (err) {
+    console.error("loadLikes error:", err);
+  }
+}
+
+async function toggleLike() {
+  try {
+    const likeRef = doc(db, "likes", albumId);
+    const snap = await getDoc(likeRef);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      const users = data.users || [];
+      if (users.includes(deviceId)) return; // Sudah pernah like
+
+      // Tambah 1 like
+      users.push(deviceId);
+      await updateDoc(likeRef, {
+        count: increment(1),
+        users: users
+      });
+
+      totalLikes++;
+      likeCount.textContent = totalLikes;
+      likeBtn.classList.add("active");
+    } else {
+      // Buat dokumen baru
+      await setDoc(likeRef, {
+        count: 1,
+        users: [deviceId]
+      });
+
+      totalLikes = 1;
+      likeCount.textContent = totalLikes;
+      likeBtn.classList.add("active");
+    }
+  } catch (err) {
+    console.error("toggleLike error:", err);
+  }
+}
+
+likeBtn.addEventListener("click", toggleLike);
 
   // Jalankan saat halaman dimuat
   loadGallery();
+loadLikes();
+ 
 </script>
 
 <script>
