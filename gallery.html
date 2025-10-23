@@ -56,10 +56,7 @@
   }
 
   @keyframes fadeUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .gallery img:hover { transform: scale(1.02); }
@@ -77,10 +74,7 @@
     transition: opacity 0.25s ease;
   }
 
-  .fullscreen.active {
-    display: flex;
-    opacity: 1;
-  }
+  .fullscreen.active { display: flex; opacity: 1; }
 
   .fullscreen img {
     max-width: 90%;
@@ -116,9 +110,7 @@
     user-select: none;
   }
 
-  .like-btn:active {
-    transform: scale(0.9);
-  }
+  .like-btn:active { transform: scale(0.9); }
 
   .like-btn.active {
     color: #1976d2;
@@ -164,7 +156,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
@@ -178,7 +170,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // Ambil parameter
   const params = new URLSearchParams(window.location.search);
   const albumId = params.get("id");
   const galleryEl = document.getElementById("gallery");
@@ -242,12 +233,45 @@
     fullscreen.classList.add("active");
   }
 
-  // Tutup hanya jika klik area kosong
   fullscreen.addEventListener("click", (e) => {
     if (e.target === fullscreen) fullscreen.classList.remove("active");
   });
 
-  // === SISTEM LIKE TOGGLE ===
+  // ==== SISTEM SWIPE MOBILE ====
+  let startX = 0;
+  let endX = 0;
+
+  fullscreen.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+  });
+
+  fullscreen.addEventListener("touchmove", (e) => {
+    endX = e.touches[0].clientX;
+  });
+
+  fullscreen.addEventListener("touchend", () => {
+    const diff = endX - startX;
+    if (Math.abs(diff) > 50) {
+      if (diff < 0) nextPhoto();
+      else prevPhoto();
+    }
+  });
+
+  function nextPhoto() {
+    if (currentIndex < photoList.length - 1) {
+      currentIndex++;
+      fsImg.src = photoList[currentIndex];
+    }
+  }
+
+  function prevPhoto() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      fsImg.src = photoList[currentIndex];
+    }
+  }
+
+  // ==== LIKE BUTTON ====
   function getDeviceId() {
     let id = localStorage.getItem("device_id");
     if (!id) {
@@ -280,7 +304,7 @@
   }
 
   async function toggleLike(e) {
-    e.stopPropagation(); // jangan tutup fullscreen
+    e.stopPropagation();
     const likeRef = doc(db, "likes", albumId);
 
     try {
@@ -295,7 +319,6 @@
       }
 
       if (users.includes(deviceId)) {
-        // === Batalkan Like ===
         users = users.filter(u => u !== deviceId);
         count = Math.max(0, count - 1);
         await updateDoc(likeRef, { count, users });
@@ -303,7 +326,6 @@
         totalLikes = count;
         likeBtn.classList.remove("active");
       } else {
-        // === Tambah Like ===
         users.push(deviceId);
         count += 1;
         await setDoc(likeRef, { count, users });
