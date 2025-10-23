@@ -66,6 +66,12 @@
     border-radius: 10px;
   }
   .fullscreen.active { display: flex; }
+
+  .loading, .error, .empty {
+    text-align: center;
+    color: #888;
+    margin-top: 100px;
+  }
 </style>
 </head>
 <body>
@@ -85,6 +91,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+  // === Konfigurasi Firebase (sama dengan admin & index) ===
   const firebaseConfig = {
     apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
     authDomain: "galeridkv-71c50.firebaseapp.com",
@@ -97,6 +104,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // === Ambil parameter album ===
   function getQueryParam(name) {
     const params = new URLSearchParams(window.location.search);
     return params.get(name);
@@ -108,16 +116,21 @@
 
   async function loadGallery() {
     if (!albumId) {
-      galleryEl.innerHTML = "<p style='text-align:center;color:red;'>Album tidak ditemukan.</p>";
+      galleryEl.innerHTML = "<p class='error'>Album tidak ditemukan.</p>";
+      albumNameEl.textContent = "Tidak Ada Album";
       return;
     }
+
+    albumNameEl.textContent = "Memuat...";
+    galleryEl.innerHTML = "<p class='loading'>Mengambil data dari server...</p>";
 
     try {
       const docRef = doc(db, "albums", albumId);
       const snap = await getDoc(docRef);
+
       if (!snap.exists()) {
         albumNameEl.textContent = "Album tidak ditemukan";
-        galleryEl.innerHTML = "<p style='text-align:center;color:#999;'>Data tidak ditemukan.</p>";
+        galleryEl.innerHTML = "<p class='error'>Data tidak ditemukan di database.</p>";
         return;
       }
 
@@ -126,22 +139,27 @@
       galleryEl.innerHTML = "";
 
       if (!data.photos || data.photos.length === 0) {
-        galleryEl.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada foto.</p>";
+        galleryEl.innerHTML = "<p class='empty'>Belum ada foto di album ini.</p>";
         return;
       }
 
+      // === Tampilkan semua gambar ===
       data.photos.forEach((link) => {
         const img = document.createElement("img");
         img.src = link;
+        img.alt = albumId;
+        img.loading = "lazy";
         img.onclick = () => openFullscreen(link);
         galleryEl.appendChild(img);
       });
     } catch (err) {
-      console.error(err);
-      galleryEl.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data.</p>";
+      console.error("loadGallery error:", err);
+      albumNameEl.textContent = "Gagal Memuat";
+      galleryEl.innerHTML = "<p class='error'>Terjadi kesalahan saat memuat data.</p>";
     }
   }
 
+  // === Fungsi tambahan ===
   function openFullscreen(url) {
     const fs = document.getElementById("fullscreen");
     const fsImg = document.getElementById("fullscreenImg");
@@ -157,6 +175,7 @@
     window.location.href = "index.html";
   }
 
+  // === Jalankan saat halaman dimuat ===
   loadGallery();
 </script>
 </body>
