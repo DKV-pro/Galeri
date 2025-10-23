@@ -172,20 +172,17 @@
         }
 
         querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          div.className = "album";
-          div.innerHTML = `
-            <img src="${data.cover || 'https://via.placeholder.com/100'}">
-            <div class="album-info">
-              <h4>${data.name}</h4>
-              <p>${(data.photos?.length || 0)} foto</p>
-            </div>
-            <div class="arrow">›</div>
-          `;
-          div.onclick = () => openGallery(doc.id, data.photos || []);
-          albumList.appendChild(div);
-        });
+  const data = doc.data();
+  const div = document.createElement("div");
+  div.className = "album";
+  div.innerHTML = `
+    <div class="album-info">
+      <h4>${data.name}</h4>
+      <a href="${data.link}" target="_blank">Buka Google Drive</a>
+    </div>
+  `;
+  albumList.appendChild(div);
+});
       } catch (e) {
         console.error(e);
         albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
