@@ -129,7 +129,7 @@
       // Tambah link ke album siswa
       async function tambahData() {
         const namaId = siswaSelect.value;
-        const link = linkInput.value.trim();
+        let link = linkInput.value.trim();
         if (!namaId) return alert("Pilih nama siswa.");
         if (!link) return alert("Isi link Google Drive terlebih dahulu.");
         
