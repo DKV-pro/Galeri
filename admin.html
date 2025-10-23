@@ -7,7 +7,7 @@
   <script type="module">
     // --- Firebase setup ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
@@ -26,8 +26,10 @@
     const linkInput = document.getElementById("driveLink");
     const addBtn = document.getElementById("addBtn");
     const listContainer = document.getElementById("dataList");
+    const namaBaruInput = document.getElementById("namaBaru");
+    const addNamaBtn = document.getElementById("addNamaBtn");
 
-    // --- Tambahkan data ke Firestore ---
+    // --- Tambah link ke Firestore ---
     async function tambahData() {
       const nama = siswaSelect.value;
       const link = linkInput.value.trim();
@@ -45,6 +47,31 @@
       } catch (err) {
         console.error("Gagal menambah data:", err);
       }
+    }
+
+    // --- Tambah nama siswa baru ---
+    async function tambahNamaBaru() {
+      const namaBaru = namaBaruInput.value.trim();
+      if (!namaBaru) return alert("Masukkan nama siswa terlebih dahulu!");
+
+      // Simpan di koleksi 'siswa'
+      await setDoc(doc(db, "siswa", namaBaru), { nama: namaBaru });
+      namaBaruInput.value = "";
+      alert("✅ Nama siswa ditambahkan!");
+      muatDaftarSiswa();
+    }
+
+    // --- Muat daftar nama siswa dari Firestore ---
+    async function muatDaftarSiswa() {
+      siswaSelect.innerHTML = `<option value="">Pilih Nama Siswa</option>`;
+      const snapshot = await getDocs(collection(db, "siswa"));
+      snapshot.forEach((docSnap) => {
+        const nama = docSnap.data().nama;
+        const opt = document.createElement("option");
+        opt.value = nama;
+        opt.textContent = nama;
+        siswaSelect.appendChild(opt);
+      });
     }
 
     // --- Tampilkan data dari Firestore ---
@@ -69,7 +96,7 @@
       });
     }
 
-    // --- Hapus data ---
+    // --- Hapus data galeri ---
     window.hapusData = async function(id) {
       if (confirm("Yakin ingin menghapus data ini?")) {
         await deleteDoc(doc(db, "galeri", id));
@@ -77,7 +104,7 @@
       }
     };
 
-    // --- Edit data ---
+    // --- Edit data galeri ---
     window.editData = async function(id, nama, link) {
       const newLink = prompt("Edit link Google Drive:", link);
       if (newLink && newLink !== link) {
@@ -88,7 +115,11 @@
 
     // --- Event ---
     addBtn.addEventListener("click", tambahData);
-    window.onload = tampilkanData;
+    addNamaBtn.addEventListener("click", tambahNamaBaru);
+    window.onload = () => {
+      muatDaftarSiswa();
+      tampilkanData();
+    };
   </script>
 
   <style>
@@ -157,20 +188,29 @@
       font-size: 16px;
       padding: 5px 8px;
     }
+
+    .flex {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <h2>Mode Pengembang</h2>
 
   <div class="card">
+    <h3>Tambah Nama Siswa Baru</h3>
+    <div class="flex">
+      <input type="text" id="namaBaru" placeholder="Masukkan nama siswa baru...">
+      <button id="addNamaBtn">Tambah</button>
+    </div>
+  </div>
+
+  <div class="card">
     <h3>Tambah Foto/Video (Google Drive)</h3>
     <select id="siswaSelect">
-      <option value="">Pilih Nama Siswa</option>
-      <option>Andi</option>
-      <option>Budi</option>
-      <option>Citra</option>
-      <option>Dewi</option>
-      <option>Fajar</option>
+      <option value="">Memuat data siswa...</option>
     </select>
     <input type="text" id="driveLink" placeholder="Tempel link Google Drive...">
     <button id="addBtn">Tambah ke Galeri</button>
