@@ -14,71 +14,36 @@
     overflow-x: hidden;
   }
 
-  /* Header */
   header {
     background: #fff;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 55px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0 15px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     z-index: 10;
-    justify-content: space-between;
   }
 
-  .menu-btn {
-    font-size: 24px;
-    color: #000;
-    cursor: pointer;
-  }
+  .menu-btn { font-size: 24px; cursor: pointer; }
+  .back-btn-header { font-size: 22px; color: #e97b8d; cursor: pointer; display: none; }
 
-  .back-btn-header {
-    font-size: 22px;
-    color: #e97b8d;
-    cursor: pointer;
-    display: none;
-  }
-
-  header h1 {
-    font-size: 18px;
-    margin: 0;
-    font-weight: 600;
-    display: none;
-  }
-
-  /* Tabs */
   .tabs {
     display: flex;
     justify-content: space-around;
     background: #fff;
     position: fixed;
     top: 55px;
-    left: 0;
-    right: 0;
+    left: 0; right: 0;
     height: 45px;
     border-bottom: 1px solid #eee;
     z-index: 9;
   }
+  .tab { flex: 1; text-align: center; line-height: 45px; color: #777; cursor: pointer; }
+  .tab.active { color: #e97b8d; border-bottom: 2px solid #e97b8d; }
 
-  .tab {
-    flex: 1;
-    text-align: center;
-    line-height: 45px;
-    color: #777;
-    font-weight: 500;
-    cursor: pointer;
-  }
-
-  .tab.active {
-    color: #e97b8d;
-    border-bottom: 2px solid #e97b8d;
-  }
-
-  /* Album List */
   .album-list {
     margin-top: 110px;
     padding: 10px 15px 80px;
@@ -95,122 +60,47 @@
     cursor: pointer;
     transition: transform 0.1s ease-in-out;
   }
-
   .album:hover { transform: scale(1.01); }
-
   .album img {
-    width: 65px;
-    height: 65px;
+    width: 65px; height: 65px;
     border-radius: 12px;
     object-fit: cover;
   }
+  .album-info { flex: 1; margin-left: 10px; }
+  .album-info h4 { margin: 0; font-size: 15px; font-weight: 600; }
+  .album-info p { margin: 3px 0 0; font-size: 12px; color: #777; }
+  .arrow { font-size: 20px; color: #aaa; font-weight: bold; }
 
-  .album-info {
-    flex: 1;
-    margin-left: 10px;
-  }
-
-  .album-info h4 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-  }
-
-  .album-info p {
-    margin: 3px 0 0;
-    font-size: 12px;
-    color: #777;
-  }
-
-  .arrow {
-    font-size: 20px;
-    color: #aaa;
-    font-weight: bold;
-  }
-
-  /* Sidebar */
   .sidebar {
-    position: fixed;
-    top: 0;
-    left: -220px;
-    width: 220px;
-    height: 100%;
-    background: #000;
-    color: #fff;
+    position: fixed; top: 0; left: -220px;
+    width: 220px; height: 100%;
+    background: #000; color: #fff;
     transition: left 0.3s ease;
-    z-index: 20;
-    padding: 20px;
+    z-index: 20; padding: 20px;
   }
-
   .sidebar.active { left: 0; }
-
-  .sidebar h3 {
-    margin: 0 0 15px;
-    color: #fff;
-    font-weight: 600;
-  }
-
-  .sidebar a {
-    display: block;
-    color: #ccc;
-    text-decoration: none;
-    margin: 10px 0;
-    font-size: 15px;
-  }
-
+  .sidebar h3 { margin: 0 0 15px; color: #fff; font-weight: 600; }
+  .sidebar a { display: block; color: #ccc; text-decoration: none; margin: 10px 0; font-size: 15px; }
   .sidebar a:hover { color: #fff; }
-
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    display: none;
-    z-index: 15;
-  }
-
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 15; }
   .overlay.active { display: block; }
 
-  /* Gallery view */
-  .gallery-view {
-    display: none;
-    padding: 70px 15px 60px;
-  }
-
+  .gallery-view { display: none; padding: 70px 15px 60px; }
   .gallery-view.active { display: block; }
-
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
-
+  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .gallery-grid img {
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 8px;
-    cursor: pointer;
+    width: 100%; height: 100px;
+    object-fit: cover; border-radius: 8px; cursor: pointer;
   }
 
-  /* Fullscreen preview */
   .fullscreen {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,0.95);
-    display: none;
-    justify-content: center;
-    align-items: center;
+    display: none; justify-content: center; align-items: center;
     z-index: 50;
   }
-
-  .fullscreen img {
-    max-width: 90%;
-    max-height: 90%;
-    border-radius: 10px;
-  }
-
+  .fullscreen img { max-width: 90%; max-height: 90%; border-radius: 10px; }
   .fullscreen.active { display: flex; }
-
 </style>
 </head>
 <body>
@@ -218,6 +108,7 @@
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <h3>Menu</h3>
+    <a href="admin.html">🧑‍💻 Admin Panel</a>
     <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
     <a href="#" onclick="logout()">🚪 Logout</a>
   </div>
@@ -238,34 +129,7 @@
   </div>
 
   <!-- Album List -->
-  <div class="album-list" id="albumList">
-    <div class="album" onclick="openGallery('recent')">
-      <img src="https://picsum.photos/100?random=1">
-      <div class="album-info">
-        <h4>Recent</h4>
-        <p>199 foto</p>
-      </div>
-      <div class="arrow">›</div>
-    </div>
-
-    <div class="album" onclick="openGallery('camera')">
-      <img src="https://picsum.photos/100?random=2">
-      <div class="album-info">
-        <h4>Camera</h4>
-        <p>505 foto</p>
-      </div>
-      <div class="arrow">›</div>
-    </div>
-
-    <div class="album" onclick="openGallery('whatsapp')">
-      <img src="https://picsum.photos/100?random=3">
-      <div class="album-info">
-        <h4>WhatsApp</h4>
-        <p>999 foto</p>
-      </div>
-      <div class="arrow">›</div>
-    </div>
-  </div>
+  <div class="album-list" id="albumList"></div>
 
   <!-- Gallery View -->
   <div class="gallery-view" id="galleryView">
@@ -278,118 +142,116 @@
   </div>
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
-    authDomain: "galeridkv-71c50.firebaseapp.com",
-    projectId: "galeridkv-71c50",
-    storageBucket: "galeridkv-71c50.appspot.com",
-    messagingSenderId: "664839362655",
-    appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
+      authDomain: "galeridkv-71c50.firebaseapp.com",
+      projectId: "galeridkv-71c50",
+      storageBucket: "galeridkv-71c50.appspot.com",
+      messagingSenderId: "664839362655",
+      appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
+    };
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  // 🔹 Ambil semua album dari Firestore
-  async function loadAlbums() {
-    const albumList = document.getElementById("albumList");
-    albumList.innerHTML = "<p style='text-align:center;color:#999;'>Memuat data...</p>";
+    async function loadAlbums() {
+      const albumList = document.getElementById("albumList");
+      albumList.innerHTML = "<p style='text-align:center;color:#999;'>Memuat data...</p>";
 
-    try {
-      const snapshot = await db.collection("albums").get();
-      albumList.innerHTML = "";
+      try {
+        const querySnapshot = await getDocs(collection(db, "albums"));
+        albumList.innerHTML = "";
 
-      if (snapshot.empty) {
-        albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
-        return;
+        if (querySnapshot.empty) {
+          albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
+          return;
+        }
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const div = document.createElement("div");
+          div.className = "album";
+          div.innerHTML = `
+            <img src="${data.cover || 'https://via.placeholder.com/100'}">
+            <div class="album-info">
+              <h4>${data.name}</h4>
+              <p>${(data.photos?.length || 0)} foto</p>
+            </div>
+            <div class="arrow">›</div>
+          `;
+          div.onclick = () => openGallery(doc.id, data.photos || []);
+          albumList.appendChild(div);
+        });
+      } catch (e) {
+        console.error(e);
+        albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
+      }
+    }
+
+    window.openGallery = function(id, photos) {
+      document.getElementById('albumList').style.display = 'none';
+      const galleryView = document.getElementById('galleryView');
+      const grid = document.getElementById('galleryGrid');
+      const backBtnHeader = document.getElementById('backBtnHeader');
+      const menuBtn = document.getElementById('menuBtn');
+
+      backBtnHeader.style.display = 'block';
+      menuBtn.style.visibility = 'hidden';
+      grid.innerHTML = '';
+
+      if (!photos || photos.length === 0) {
+        grid.innerHTML = "<p style='text-align:center;color:#aaa;'>Tidak ada foto.</p>";
+      } else {
+        photos.forEach(url => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.onclick = () => openFullscreen(url);
+          grid.appendChild(img);
+        });
       }
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const div = document.createElement("div");
-        div.className = "album";
-        div.innerHTML = `
-          <img src="${data.cover || 'https://via.placeholder.com/100'}">
-          <div class="album-info">
-            <h4>${data.name}</h4>
-            <p>${(data.photos?.length || 0)} foto</p>
-          </div>
-          <div class="arrow">›</div>
-        `;
-        div.onclick = () => openGallery(doc.id, data.photos || []);
-        albumList.appendChild(div);
-      });
-    } catch (e) {
-      console.error(e);
-      albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data.</p>";
-    }
-  }
-
-  function openGallery(id, photos) {
-    document.getElementById('albumList').style.display = 'none';
-    const galleryView = document.getElementById('galleryView');
-    const grid = document.getElementById('galleryGrid');
-    const backBtnHeader = document.getElementById('backBtnHeader');
-    const menuBtn = document.getElementById('menuBtn');
-
-    backBtnHeader.style.display = 'block';
-    menuBtn.style.visibility = 'hidden';
-    grid.innerHTML = '';
-
-    if (!photos || photos.length === 0) {
-      grid.innerHTML = "<p style='text-align:center;color:#aaa;'>Tidak ada foto.</p>";
-    } else {
-      photos.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.onclick = () => openFullscreen(url);
-        grid.appendChild(img);
-      });
+      galleryView.classList.add('active');
     }
 
-    galleryView.classList.add('active');
-  }
+    window.goBack = function() {
+      document.getElementById('albumList').style.display = 'block';
+      document.getElementById('galleryView').classList.remove('active');
+      document.getElementById('backBtnHeader').style.display = 'none';
+      document.getElementById('menuBtn').style.visibility = 'visible';
+    }
 
-  function goBack() {
-    document.getElementById('albumList').style.display = 'block';
-    document.getElementById('galleryView').classList.remove('active');
-    document.getElementById('backBtnHeader').style.display = 'none';
-    document.getElementById('menuBtn').style.visibility = 'visible';
-  }
+    window.openFullscreen = function(url) {
+      const fullscreen = document.getElementById('fullscreen');
+      const img = document.getElementById('fullscreenImg');
+      img.src = url;
+      fullscreen.classList.add('active');
+    }
 
-  function openFullscreen(url) {
-    const fullscreen = document.getElementById('fullscreen');
-    const img = document.getElementById('fullscreenImg');
-    img.src = url;
-    fullscreen.classList.add('active');
-  }
+    window.closeFullscreen = function() {
+      document.getElementById('fullscreen').classList.remove('active');
+    }
 
-  function closeFullscreen() {
-    document.getElementById('fullscreen').classList.remove('active');
-  }
+    window.openLogin = function() {
+      window.location.href = "login.html";
+    }
 
-  function openLogin() {
-    window.location.href = "login.html";
-  }
+    window.logout = function() {
+      localStorage.removeItem("isLoggedIn");
+      window.location.href = "index.html";
+    }
 
-  function logout() {
-    localStorage.removeItem("isLoggedIn");
-    window.location.href = "index.html";
-  }
- function toggleSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const overlay = document.getElementById("overlay");
-  sidebar.classList.toggle("active");
-  overlay.classList.toggle("active");
- }
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("overlay");
+      sidebar.classList.toggle("active");
+      overlay.classList.toggle("active");
+    }
 
-  window.onload = loadAlbums;
- </script>
- 
+    window.onload = loadAlbums;
+  </script>
 </body>
-   </html>
-   
+</html>
