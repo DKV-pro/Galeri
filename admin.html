@@ -133,12 +133,14 @@
         if (!namaId) return alert("Pilih nama siswa.");
         if (!link) return alert("Isi link Google Drive terlebih dahulu.");
         
-          // 🔧 KONVERSI LINK GOOGLE DRIVE OTOMATIS
-  const match = link.match(/\/d\/(.*?)\//);
-  if (match) {
-    const fileId = match[1];
-    link = `https://drive.google.com/uc?export=view&id=${fileId}`;
-    }
+// regex lebih fleksibel
+const match = link.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/);
+if (match) {
+  const fileId = match[1];
+  link = `https://drive.google.com/uc?export=view&id=${fileId}`;
+} else {
+  console.warn("Format link Google Drive tidak dikenali:", link);
+}
         try {
           const ref = doc(db, "albums", namaId);
           await updateDoc(ref, { photos: arrayUnion(link) });
