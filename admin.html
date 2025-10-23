@@ -4,10 +4,53 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mode Pengembang</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f6fa; margin: 0; padding: 20px; }
+    h2 { text-align:center; background:#222; color:#fff; padding:12px; border-radius:10px; }
+    .card { background:white; padding:20px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:20px; }
+    select,input { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-top:10px; }
+    button { background:#e57373; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; }
+    button:hover { background:#d32f2f; }
+    .flex { display:flex; gap:10px; margin-top:10px; }
+    .album { background:#fff; padding:15px; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.1); margin-bottom:15px; }
+    .album-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .links { border-top:1px solid #eee; padding-top:10px; }
+    .link-item { display:flex; justify-content:space-between; align-items:center; padding:5px 0; }
+    .link-item a { color:#1976d2; text-decoration:none; word-break:break-all; }
+    .link-item button { background:#b71c1c; color:white; padding:4px 8px; border-radius:6px; font-size:13px; }
+    .hapus-album { background:#444; color:white; padding:6px 10px; border-radius:6px; }
+    #status { color:#666; font-size:13px; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <h2>Mode Pengembang</h2>
 
+  <div class="card">
+    <h3>Tambah Nama Siswa</h3>
+    <div class="flex">
+      <input type="text" id="namaBaru" placeholder="Masukkan nama siswa..." />
+      <button id="addNamaBtn">Tambah</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <h3>Tambah Link Google Drive</h3>
+    <select id="siswaSelect">
+      <option value="">Memuat daftar siswa...</option>
+    </select>
+    <input type="text" id="driveLink" placeholder="Tempel link Google Drive (viewer link)..." />
+    <button id="addBtn">Tambahkan</button>
+  </div>
+
+  <div id="dataList"></div>
+
+  <button style="display:block;margin:20px auto;" onclick="location.href='index.html'">🏠 Kembali ke Galeri</button>
+
+  <!-- SCRIPT di bawah agar DOM sudah ada -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { 
+    import {
       getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
@@ -20,239 +63,183 @@
       appId: "1:664839362655:web:f33ee02a0ced407f8e63ea"
     };
 
+    // Inisialisasi Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Elemen DOM
-    const siswaSelect = document.getElementById("siswaSelect");
-    const linkInput = document.getElementById("driveLink");
-    const addBtn = document.getElementById("addBtn");
-    const listContainer = document.getElementById("dataList");
-    const namaBaruInput = document.getElementById("namaBaru");
-    const addNamaBtn = document.getElementById("addNamaBtn");
+    // Semua akses DOM setelah DOMContentLoaded
+    window.addEventListener('DOMContentLoaded', () => {
+      const siswaSelect = document.getElementById("siswaSelect");
+      const linkInput = document.getElementById("driveLink");
+      const addBtn = document.getElementById("addBtn");
+      const listContainer = document.getElementById("dataList");
+      const namaBaruInput = document.getElementById("namaBaru");
+      const addNamaBtn = document.getElementById("addNamaBtn");
+      const status = document.getElementById("status");
 
-    // Tambah nama siswa baru (album baru di Firestore)
-    async function tambahNamaBaru() {
-      const nama = namaBaruInput.value.trim();
-      if (!nama) return alert("Masukkan nama siswa terlebih dahulu!");
-
-      const ref = doc(db, "albums", nama);
-      await setDoc(ref, {
-        name: nama,
-        photos: []
-      });
-
-      namaBaruInput.value = "";
-      alert("✅ Nama siswa berhasil ditambahkan!");
-      await muatDaftarSiswa();
-      await tampilkanData();
-    }
-
-    // Muat daftar nama siswa (album)
-    async function muatDaftarSiswa() {
-      siswaSelect.innerHTML = `<option value="">Pilih Nama Siswa</option>`;
-      const snapshot = await getDocs(collection(db, "albums"));
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const opt = document.createElement("option");
-        opt.value = data.name;
-        opt.textContent = data.name;
-        siswaSelect.appendChild(opt);
-      });
-    }
-
-    // Tambah link ke album siswa
-    async function tambahData() {
-      const nama = siswaSelect.value;
-      const link = linkInput.value.trim();
-      if (!nama || !link) return alert("Pilih nama siswa dan isi link!");
-
-      const ref = doc(db, "albums", nama);
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        await updateDoc(ref, { photos: arrayUnion(link) });
-      } else {
-        await setDoc(ref, { name: nama, photos: [link] });
+      // helper tampil status kecil
+      function setStatus(text) {
+        status.textContent = text || "";
+        setTimeout(() => { status.textContent = ""; }, 3000);
       }
 
-      linkInput.value = "";
-      alert("✅ Link berhasil ditambahkan!");
-      tampilkanData();
-    }
-
-    // Hapus satu link dari album siswa
-    window.hapusLink = async function(nama, link) {
-      if (!confirm("Hapus link ini?")) return;
-      const ref = doc(db, "albums", nama);
-      await updateDoc(ref, { photos: arrayRemove(link) });
-      tampilkanData();
-    };
-
-    // Hapus seluruh album siswa
-    window.hapusAlbum = async function(nama) {
-      if (!confirm(`Yakin ingin menghapus seluruh data milik ${nama}?`)) return;
-      await deleteDoc(doc(db, "albums", nama));
-      tampilkanData();
-      muatDaftarSiswa();
-    };
-
-    // Tampilkan data semua siswa dan linknya
-    async function tampilkanData() {
-      listContainer.innerHTML = "";
-      const snapshot = await getDocs(collection(db, "albums"));
-      if (snapshot.empty) {
-        listContainer.innerHTML = "<p style='text-align:center;color:#888;'>Belum ada data.</p>";
-        return;
-      }
-
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const container = document.createElement("div");
-        container.className = "album";
-
-        let linkListHTML = "";
-        if (data.photos && data.photos.length > 0) {
-          data.photos.forEach((link) => {
-            linkListHTML += `
-              <div class="link-item">
-                <a href="${link}" target="_blank">${link}</a>
-                <button onclick="hapusLink('${data.name}', '${link}')">🗑️ Hapus Link</button>
-              </div>
-            `;
+      // Muat daftar nama siswa (album)
+      async function muatDaftarSiswa() {
+        siswaSelect.innerHTML = `<option value="">Pilih Nama Siswa</option>`;
+        try {
+          const snapshot = await getDocs(collection(db, "albums"));
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const opt = document.createElement("option");
+            opt.value = docSnap.id; // gunakan id dokumen (nama) agar unik
+            opt.textContent = data.name || docSnap.id;
+            siswaSelect.appendChild(opt);
           });
-        } else {
-          linkListHTML = `<small>Tidak ada link</small>`;
+        } catch (err) {
+          console.error("muatDaftarSiswa error:", err);
+          setStatus("Gagal memuat daftar siswa.");
         }
+      }
 
-        container.innerHTML = `
-          <div class="album-header">
-            <b>📁 ${data.name}</b>
-            <button class="hapus-album" onclick="hapusAlbum('${data.name}')">Hapus Siswa</button>
-          </div>
-          <div class="links">${linkListHTML}</div>
-        `;
+      // Tambah nama siswa baru (album baru di Firestore)
+      async function tambahNamaBaru() {
+        const nama = namaBaruInput.value.trim();
+        if (!nama) return alert("Masukkan nama siswa terlebih dahulu!");
+        const id = nama; // gunakan nama sebagai id (sederhana)
+        try {
+          const ref = doc(db, "albums", id);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            alert("Nama sudah ada.");
+            return;
+          }
+          await setDoc(ref, { name: nama, photos: [] });
+          namaBaruInput.value = "";
+          setStatus("Album baru dibuat.");
+          await muatDaftarSiswa();
+          await tampilkanData();
+          // pilih yang baru
+          siswaSelect.value = id;
+        } catch (err) {
+          console.error("tambahNamaBaru error:", err);
+          alert("Gagal menambah nama. Cek console.");
+        }
+      }
 
-        listContainer.appendChild(container);
-      });
-    }
+      // Tambah link ke album siswa
+      async function tambahData() {
+        const namaId = siswaSelect.value;
+        const link = linkInput.value.trim();
+        if (!namaId) return alert("Pilih nama siswa.");
+        if (!link) return alert("Isi link Google Drive terlebih dahulu.");
+        try {
+          const ref = doc(db, "albums", namaId);
+          await updateDoc(ref, { photos: arrayUnion(link) });
+          linkInput.value = "";
+          setStatus("Link ditambahkan.");
+          await tampilkanData();
+        } catch (err) {
+          // jika dokumen belum ada, buat baru (fallback)
+          try {
+            await setDoc(doc(db, "albums", namaId), { name: namaId, photos: [link] });
+            linkInput.value = "";
+            setStatus("Link ditambahkan (dokumen baru dibuat).");
+            await muatDaftarSiswa();
+            await tampilkanData();
+          } catch (err2) {
+            console.error("tambahData error:", err2);
+            alert("Gagal menambah link. Cek console.");
+          }
+        }
+      }
 
-    // Event listener
-    addNamaBtn.addEventListener("click", tambahNamaBaru);
-    addBtn.addEventListener("click", tambahData);
+      // Hapus satu link dari album siswa
+      window.hapusLink = async function(docId, link) {
+        if (!confirm("Hapus link ini?")) return;
+        try {
+          const ref = doc(db, "albums", docId);
+          await updateDoc(ref, { photos: arrayRemove(link) });
+          setStatus("Link dihapus.");
+          await tampilkanData();
+        } catch (err) {
+          console.error("hapusLink error:", err);
+          alert("Gagal menghapus link. Cek console.");
+        }
+      };
 
-    window.onload = () => {
-      muatDaftarSiswa();
-      tampilkanData();
-    };
+      // Hapus seluruh album siswa
+      window.hapusAlbum = async function(docId) {
+        if (!confirm(`Yakin ingin menghapus seluruh data milik ${docId}?`)) return;
+        try {
+          await deleteDoc(doc(db, "albums", docId));
+          setStatus("Album dihapus.");
+          await muatDaftarSiswa();
+          await tampilkanData();
+        } catch (err) {
+          console.error("hapusAlbum error:", err);
+          alert("Gagal menghapus album. Cek console.");
+        }
+      };
+
+      // Tampilkan data semua siswa dan linknya
+      async function tampilkanData() {
+        listContainer.innerHTML = "";
+        try {
+          const snapshot = await getDocs(collection(db, "albums"));
+          if (snapshot.empty) {
+            listContainer.innerHTML = "<p style='text-align:center;color:#888;'>Belum ada data.</p>";
+            return;
+          }
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+            const container = document.createElement("div");
+            container.className = "album";
+
+            let linkListHTML = "";
+            if (data.photos && data.photos.length > 0) {
+              data.photos.forEach((link) => {
+                // encodeURIComponent untuk keamanan saat menaruh string di atribut onClick
+                const encoded = encodeURIComponent(link);
+                linkListHTML += `
+                  <div class="link-item">
+                    <a href="${link}" target="_blank" rel="noopener noreferrer">🔗 ${link}</a>
+                    <button onclick="hapusLink('${id}', decodeURIComponent('${encoded}'))">🗑️ Hapus Link</button>
+                  </div>
+                `;
+              });
+            } else {
+              linkListHTML = `<small>Tidak ada link</small>`;
+            }
+
+            container.innerHTML = `
+              <div class="album-header">
+                <b>📁 ${data.name || id}</b>
+                <button class="hapus-album" onclick="hapusAlbum('${id}')">Hapus Siswa</button>
+              </div>
+              <div class="links">${linkListHTML}</div>
+            `;
+
+            listContainer.appendChild(container);
+          });
+        } catch (err) {
+          console.error("tampilkanData error:", err);
+          listContainer.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data.</p>";
+        }
+      }
+
+      // Pasang event listener
+      addNamaBtn.addEventListener("click", tambahNamaBaru);
+      addBtn.addEventListener("click", tambahData);
+
+      // Inisialisasi awal
+      (async () => {
+        setStatus("Memuat...");
+        await muatDaftarSiswa();
+        await tampilkanData();
+        setStatus("");
+      })();
+    });
   </script>
-
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f5f6fa;
-      margin: 0;
-      padding: 20px;
-    }
-    h2 {
-      text-align: center;
-      background: #222;
-      color: #fff;
-      padding: 12px;
-      border-radius: 10px;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    select, input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-    button {
-      background: #e57373;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #d32f2f;
-    }
-    .flex {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .album {
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      margin-bottom: 15px;
-    }
-    .album-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .links {
-      border-top: 1px solid #eee;
-      padding-top: 10px;
-    }
-    .link-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 5px 0;
-    }
-    .link-item a {
-      color: #1976d2;
-      text-decoration: none;
-      word-break: break-all;
-    }
-    .link-item button {
-      background: #b71c1c;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    .hapus-album {
-      background: #444;
-    }
-  </style>
-</head>
-<body>
-  <h2>Mode Pengembang</h2>
-
-  <div class="card">
-    <h3>Tambah Nama Siswa</h3>
-    <div class="flex">
-      <input type="text" id="namaBaru" placeholder="Masukkan nama siswa..." />
-      <button id="addNamaBtn">Tambah</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Tambah Link Google Drive</h3>
-    <select id="siswaSelect">
-      <option value="">Memuat daftar siswa...</option>
-    </select>
-    <input type="text" id="driveLink" placeholder="Tempel link Google Drive..." />
-    <button id="addBtn">Tambahkan</button>
-  </div>
-
-  <div id="dataList"></div>
-
-  <button style="display:block;margin:20px auto;" onclick="location.href='index.html'">🏠 Kembali ke Galeri</button>
 </body>
 </html>
