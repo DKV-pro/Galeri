@@ -167,16 +167,15 @@
     fs.classList.add("active");
   }
 
-  function closeFullscreen() {
+  // === Jalankan saat halaman dimuat ===
+  loadGallery();
+   function closeFullscreen() {
     document.getElementById("fullscreen").classList.remove("active");
   }
 
   function goBack() {
     window.location.href = "index.html";
   }
-
-  // === Jalankan saat halaman dimuat ===
-  loadGallery();
 </script>
 </body>
 </html>
