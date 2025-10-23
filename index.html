@@ -380,6 +380,12 @@
     localStorage.removeItem("isLoggedIn");
     window.location.href = "index.html";
   }
+ function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("overlay");
+  sidebar.classList.toggle("active");
+  overlay.classList.toggle("active");
+ }
 
   window.onload = loadAlbums;
  </script>
