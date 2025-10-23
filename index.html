@@ -21,19 +21,32 @@
     height: 55px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     padding: 0 15px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     z-index: 10;
   }
 
-  .menu-btn { font-size: 24px; cursor: pointer; }
-  .back-btn-header { display: none; }
+  /* Tombol menu di kiri */
+  .menu-btn {
+    position: absolute;
+    left: 15px;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  /* Judul di tengah */
+  .title {
+    font-weight: 600;
+    font-size: 18px;
+    user-select: none; /* Tidak bisa diseleksi */
+    pointer-events: none; /* Tidak mengganggu klik */
+  }
 
   .album-list {
     margin-top: 70px;
     padding: 10px 15px 80px;
-    perspective: 1000px; /* agar efek 3D lebih nyata */
+    perspective: 1000px;
   }
 
   .album {
@@ -75,6 +88,7 @@
   .album-info { flex: 1; margin-left: 10px; }
   .album-info h4 { margin: 0; font-size: 15px; font-weight: 600; }
 
+  /* Sidebar */
   .sidebar {
     position: fixed; top: 0; left: -220px;
     width: 220px; height: 100%;
@@ -96,14 +110,14 @@
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <h3>Menu</h3>
-    <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
+    <a href="#" onclick="openLogin()">🔐 Login Admin</a>
   </div>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
   <!-- Header -->
   <header>
     <div class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</div>
-    <div class="back-btn-header" id="backBtnHeader"></div>
+    <div class="title">Galeri DKV</div>
   </header>
 
   <!-- Album List -->
