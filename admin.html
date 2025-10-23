@@ -132,6 +132,13 @@
         const link = linkInput.value.trim();
         if (!namaId) return alert("Pilih nama siswa.");
         if (!link) return alert("Isi link Google Drive terlebih dahulu.");
+        
+          // 🔧 KONVERSI LINK GOOGLE DRIVE OTOMATIS
+  const match = link.match(/\/d\/(.*?)\//);
+  if (match) {
+    const fileId = match[1];
+    link = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
         try {
           const ref = doc(db, "albums", namaId);
           await updateDoc(ref, { photos: arrayUnion(link) });
