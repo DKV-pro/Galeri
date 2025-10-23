@@ -53,19 +53,43 @@
   .gallery img:hover { transform: scale(1.02); }
 
   .fullscreen {
-    position: fixed; inset: 0;
+    position: fixed;
+    inset: 0;
     background: rgba(0,0,0,0.9);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 50;
   }
+
+  .fullscreen.active { display: flex; }
+
   .fullscreen img {
     max-width: 90%;
     max-height: 90%;
     border-radius: 10px;
   }
-  .fullscreen.active { display: flex; }
+
+  /* Tombol panah kiri/kanan */
+  .nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    background: rgba(0,0,0,0.4);
+    padding: 10px 16px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+
+  .nav-arrow:hover { background: rgba(0,0,0,0.7); }
+
+  .arrow-left { left: 20px; }
+  .arrow-right { right: 20px; }
 
   .loading, .error, .empty {
     text-align: center;
@@ -83,15 +107,18 @@
 
 <div class="gallery" id="gallery"></div>
 
-<div class="fullscreen" id="fullscreen" onclick="closeFullscreen()">
+<!-- Fullscreen View -->
+<div class="fullscreen" id="fullscreen" onclick="closeFullscreen(event)">
+  <span class="nav-arrow arrow-left" onclick="prevImage(event)">◀</span>
   <img id="fullscreenImg">
+  <span class="nav-arrow arrow-right" onclick="nextImage(event)">▶</span>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-  // === Konfigurasi Firebase (sama dengan admin & index) ===
+  // === Konfigurasi Firebase ===
   const firebaseConfig = {
     apiKey: "AIzaSyDQdAtltgUGIw2oo302ZHSGh9PUrSLxPY4",
     authDomain: "galeridkv-71c50.firebaseapp.com",
@@ -113,6 +140,10 @@
   const albumId = getQueryParam("id");
   const galleryEl = document.getElementById("gallery");
   const albumNameEl = document.getElementById("albumName");
+
+  // Variabel global untuk navigasi fullscreen
+  let currentIndex = 0;
+  let photoList = [];
 
   async function loadGallery() {
     if (!albumId) {
@@ -143,13 +174,16 @@
         return;
       }
 
+      // Simpan semua link ke array global
+      photoList = data.photos;
+
       // === Tampilkan semua gambar ===
-      data.photos.forEach((link) => {
+      data.photos.forEach((link, index) => {
         const img = document.createElement("img");
         img.src = link;
         img.alt = albumId;
         img.loading = "lazy";
-        img.onclick = () => openFullscreen(link);
+        img.onclick = () => openFullscreen(index);
         galleryEl.appendChild(img);
       });
     } catch (err) {
@@ -159,23 +193,39 @@
     }
   }
 
-  // === Fungsi tambahan ===
-  function openFullscreen(url) {
+  // === Fungsi fullscreen & navigasi ===
+  window.openFullscreen = function(index) {
+    currentIndex = index;
     const fs = document.getElementById("fullscreen");
     const fsImg = document.getElementById("fullscreenImg");
-    fsImg.src = url;
+    fsImg.src = photoList[currentIndex];
     fs.classList.add("active");
+  }
+
+  window.closeFullscreen = function(event) {
+    if (event.target.id === "fullscreenImg") return; // agar klik di gambar tidak menutup
+    document.getElementById("fullscreen").classList.remove("active");
+  }
+
+  window.nextImage = function(event) {
+    event.stopPropagation();
+    if (photoList.length === 0) return;
+    currentIndex = (currentIndex + 1) % photoList.length;
+    document.getElementById("fullscreenImg").src = photoList[currentIndex];
+  }
+
+  window.prevImage = function(event) {
+    event.stopPropagation();
+    if (photoList.length === 0) return;
+    currentIndex = (currentIndex - 1 + photoList.length) % photoList.length;
+    document.getElementById("fullscreenImg").src = photoList[currentIndex];
   }
 
   // === Jalankan saat halaman dimuat ===
   loadGallery();
-  </script>
-<script>
-  
-   function closeFullscreen() {
-    document.getElementById("fullscreen").classList.remove("active");
-  }
+</script>
 
+<script>
   function goBack() {
     window.location.href = "index.html";
   }
