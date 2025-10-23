@@ -8,7 +8,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { 
-      getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, arrayUnion 
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -23,7 +23,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Elemen
+    // Elemen DOM
     const siswaSelect = document.getElementById("siswaSelect");
     const linkInput = document.getElementById("driveLink");
     const addBtn = document.getElementById("addBtn");
@@ -31,7 +31,7 @@
     const namaBaruInput = document.getElementById("namaBaru");
     const addNamaBtn = document.getElementById("addNamaBtn");
 
-    // Tambah nama siswa baru (buat album baru di Firestore)
+    // Tambah nama siswa baru (album baru di Firestore)
     async function tambahNamaBaru() {
       const nama = namaBaruInput.value.trim();
       if (!nama) return alert("Masukkan nama siswa terlebih dahulu!");
@@ -39,29 +39,29 @@
       const ref = doc(db, "albums", nama);
       await setDoc(ref, {
         name: nama,
-        cover: "https://via.placeholder.com/100?text=" + encodeURIComponent(nama),
         photos: []
       });
 
       namaBaruInput.value = "";
-      alert("✅ Album baru dibuat!");
-      muatDaftarSiswa();
+      alert("✅ Nama siswa berhasil ditambahkan!");
+      await muatDaftarSiswa();
+      await tampilkanData();
     }
 
-    // Muat daftar siswa (album)
+    // Muat daftar nama siswa (album)
     async function muatDaftarSiswa() {
       siswaSelect.innerHTML = `<option value="">Pilih Nama Siswa</option>`;
       const snapshot = await getDocs(collection(db, "albums"));
       snapshot.forEach((docSnap) => {
-        const nama = docSnap.data().name;
+        const data = docSnap.data();
         const opt = document.createElement("option");
-        opt.value = nama;
-        opt.textContent = nama;
+        opt.value = data.name;
+        opt.textContent = data.name;
         siswaSelect.appendChild(opt);
       });
     }
 
-    // Tambah link ke album (update array)
+    // Tambah link ke album siswa
     async function tambahData() {
       const nama = siswaSelect.value;
       const link = linkInput.value.trim();
@@ -73,11 +73,7 @@
       if (snap.exists()) {
         await updateDoc(ref, { photos: arrayUnion(link) });
       } else {
-        await setDoc(ref, {
-          name: nama,
-          cover: "https://via.placeholder.com/100?text=" + encodeURIComponent(nama),
-          photos: [link]
-        });
+        await setDoc(ref, { name: nama, photos: [link] });
       }
 
       linkInput.value = "";
@@ -85,38 +81,63 @@
       tampilkanData();
     }
 
-    // Tampilkan data semua album
+    // Hapus satu link dari album siswa
+    window.hapusLink = async function(nama, link) {
+      if (!confirm("Hapus link ini?")) return;
+      const ref = doc(db, "albums", nama);
+      await updateDoc(ref, { photos: arrayRemove(link) });
+      tampilkanData();
+    };
+
+    // Hapus seluruh album siswa
+    window.hapusAlbum = async function(nama) {
+      if (!confirm(`Yakin ingin menghapus seluruh data milik ${nama}?`)) return;
+      await deleteDoc(doc(db, "albums", nama));
+      tampilkanData();
+      muatDaftarSiswa();
+    };
+
+    // Tampilkan data semua siswa dan linknya
     async function tampilkanData() {
       listContainer.innerHTML = "";
       const snapshot = await getDocs(collection(db, "albums"));
+      if (snapshot.empty) {
+        listContainer.innerHTML = "<p style='text-align:center;color:#888;'>Belum ada data.</p>";
+        return;
+      }
+
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const item = document.createElement("div");
-        item.className = "item";
-        const photoCount = data.photos ? data.photos.length : 0;
+        const container = document.createElement("div");
+        container.className = "album";
 
-        item.innerHTML = `
-          <div>
-            <b>📁 ${data.name}</b><br>
-            <small>${photoCount} file</small>
+        let linkListHTML = "";
+        if (data.photos && data.photos.length > 0) {
+          data.photos.forEach((link) => {
+            linkListHTML += `
+              <div class="link-item">
+                <a href="${link}" target="_blank">${link}</a>
+                <button onclick="hapusLink('${data.name}', '${link}')">🗑️ Hapus Link</button>
+              </div>
+            `;
+          });
+        } else {
+          linkListHTML = `<small>Tidak ada link</small>`;
+        }
+
+        container.innerHTML = `
+          <div class="album-header">
+            <b>📁 ${data.name}</b>
+            <button class="hapus-album" onclick="hapusAlbum('${data.name}')">Hapus Siswa</button>
           </div>
-          <div class="actions">
-            <button onclick="hapusAlbum('${docSnap.id}')">🗑️</button>
-          </div>
+          <div class="links">${linkListHTML}</div>
         `;
-        listContainer.appendChild(item);
+
+        listContainer.appendChild(container);
       });
     }
 
-    // Hapus seluruh album
-    window.hapusAlbum = async function(id) {
-      if (confirm("Yakin ingin menghapus album ini?")) {
-        await deleteDoc(doc(db, "albums", id));
-        tampilkanData();
-      }
-    };
-
-    // Event
+    // Event listener
     addNamaBtn.addEventListener("click", tambahNamaBaru);
     addBtn.addEventListener("click", tambahData);
 
@@ -129,15 +150,15 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f7f7f7;
+      background: #f5f6fa;
       margin: 0;
       padding: 20px;
     }
     h2 {
       text-align: center;
-      background: #000;
+      background: #222;
       color: #fff;
-      padding: 15px;
+      padding: 12px;
       border-radius: 10px;
     }
     .card {
@@ -158,36 +179,55 @@
       background: #e57373;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 10px 15px;
       border-radius: 8px;
-      margin-top: 10px;
       cursor: pointer;
     }
     button:hover {
       background: #d32f2f;
     }
-    #dataList {
-      margin-top: 20px;
-    }
-    .item {
-      background: #fff;
-      border-radius: 10px;
-      padding: 10px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-    .actions button {
-      margin-left: 5px;
-      font-size: 16px;
-      padding: 5px 8px;
-    }
     .flex {
       display: flex;
       gap: 10px;
       margin-top: 10px;
+    }
+    .album {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+    .album-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .links {
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+    }
+    .link-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+    .link-item a {
+      color: #1976d2;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .link-item button {
+      background: #b71c1c;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .hapus-album {
+      background: #444;
     }
   </style>
 </head>
@@ -195,17 +235,17 @@
   <h2>Mode Pengembang</h2>
 
   <div class="card">
-    <h3>Tambah Album Baru (Nama Siswa)</h3>
+    <h3>Tambah Nama Siswa</h3>
     <div class="flex">
-      <input type="text" id="namaBaru" placeholder="Masukkan nama siswa baru..." />
+      <input type="text" id="namaBaru" placeholder="Masukkan nama siswa..." />
       <button id="addNamaBtn">Tambah</button>
     </div>
   </div>
 
   <div class="card">
-    <h3>Tambah Link ke Album</h3>
+    <h3>Tambah Link Google Drive</h3>
     <select id="siswaSelect">
-      <option value="">Memuat daftar album...</option>
+      <option value="">Memuat daftar siswa...</option>
     </select>
     <input type="text" id="driveLink" placeholder="Tempel link Google Drive..." />
     <button id="addBtn">Tambahkan</button>
