@@ -86,8 +86,7 @@
     object-fit: cover;
   }
   .album-info { flex: 1; margin-left: 10px; }
-  .album-info h4 { margin: 0; font-size: 15px; font-weight: 600; user-select: none; pointer-events: none;
-   }}
+  .album-info h4 { margin: 0; font-size: 15px; font-weight: 600; user-select: none; pointer-events: none; }
 
   /* Sidebar */
   .sidebar {
@@ -139,7 +138,6 @@
   <div class="sidebar" id="sidebar">
     <h3>Menu</h3>
     <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
-    <a href="#" onclick="logout()">🚪 Logout</a>
   </div>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -210,7 +208,6 @@
     }
 
     window.openLogin = function() { window.location.href = "login.html"; }
-    window.logout = function() { localStorage.removeItem("isLoggedIn"); window.location.href = "index.html"; }
     window.toggleSidebar = function() {
       const sidebar = document.getElementById("sidebar");
       const overlay = document.getElementById("overlay");
