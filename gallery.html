@@ -271,76 +271,84 @@
     }
   }
 
-  // ==== LIKE BUTTON ====
-  function getDeviceId() {
-    let id = localStorage.getItem("device_id");
-    if (!id) {
-      id = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      localStorage.setItem("device_id", id);
-    }
-    return id;
+  // ==== LIKE BUTTON PER FOTO ====
+function getDeviceId() {
+  let id = localStorage.getItem("device_id");
+  if (!id) {
+    id = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem("device_id", id);
   }
+  return id;
+}
 
-  const deviceId = getDeviceId();
-  let totalLikes = 0;
-  let hasLiked = false;
+const deviceId = getDeviceId();
+let hasLiked = false;
+let totalLikes = 0;
 
-  async function loadLikes() {
-    try {
-      const likeRef = doc(db, "likes", albumId);
-      const snap = await getDoc(likeRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        totalLikes = data.count || 0;
-        hasLiked = data.users?.includes(deviceId) || false;
-        likeCount.textContent = totalLikes;
-        if (hasLiked) likeBtn.classList.add("active");
-      } else {
-        likeCount.textContent = "0";
-      }
-    } catch (err) {
-      console.error("loadLikes error:", err);
+// Fungsi untuk memuat like per foto
+async function loadLikesForPhoto(index) {
+  const photoId = `${albumId}_${index}`;
+  const likeRef = doc(db, "likes", photoId);
+
+  try {
+    const snap = await getDoc(likeRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      totalLikes = data.count || 0;
+      hasLiked = data.users?.includes(deviceId) || false;
+    } else {
+      totalLikes = 0;
+      hasLiked = false;
     }
+
+    likeCount.textContent = totalLikes;
+    if (hasLiked) likeBtn.classList.add("active");
+    else likeBtn.classList.remove("active");
+  } catch (err) {
+    console.error("loadLikesForPhoto error:", err);
   }
+}
 
-  async function toggleLike(e) {
-    e.stopPropagation();
-    const likeRef = doc(db, "likes", albumId);
+// Toggle like hanya untuk foto yang sedang dibuka
+async function toggleLike(e) {
+  e.stopPropagation();
+  const photoId = `${albumId}_${currentIndex}`;
+  const likeRef = doc(db, "likes", photoId);
 
-    try {
-      const snap = await getDoc(likeRef);
-      let users = [];
-      let count = 0;
+  try {
+    const snap = await getDoc(likeRef);
+    let users = [];
+    let count = 0;
 
-      if (snap.exists()) {
-        const data = snap.data();
-        users = data.users || [];
-        count = data.count || 0;
-      }
-
-      if (users.includes(deviceId)) {
-        users = users.filter(u => u !== deviceId);
-        count = Math.max(0, count - 1);
-        await updateDoc(likeRef, { count, users });
-        hasLiked = false;
-        totalLikes = count;
-        likeBtn.classList.remove("active");
-      } else {
-        users.push(deviceId);
-        count += 1;
-        await setDoc(likeRef, { count, users });
-        hasLiked = true;
-        totalLikes = count;
-        likeBtn.classList.add("active");
-      }
-
-      likeCount.textContent = totalLikes;
-    } catch (err) {
-      console.error("toggleLike error:", err);
+    if (snap.exists()) {
+      const data = snap.data();
+      users = data.users || [];
+      count = data.count || 0;
     }
-  }
 
-  likeBtn.addEventListener("click", toggleLike);
+    if (users.includes(deviceId)) {
+      users = users.filter(u => u !== deviceId);
+      count = Math.max(0, count - 1);
+      await updateDoc(likeRef, { count, users });
+      hasLiked = false;
+      totalLikes = count;
+      likeBtn.classList.remove("active");
+    } else {
+      users.push(deviceId);
+      count += 1;
+      await setDoc(likeRef, { count, users });
+      hasLiked = true;
+      totalLikes = count;
+      likeBtn.classList.add("active");
+    }
+
+    likeCount.textContent = totalLikes;
+  } catch (err) {
+    console.error("toggleLike error:", err);
+  }
+}
+
+likeBtn.addEventListener("click", toggleLike);
 
   loadGallery();
   loadLikes();
