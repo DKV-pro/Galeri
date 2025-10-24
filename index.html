@@ -27,7 +27,6 @@
     z-index: 10;
   }
 
-  /* Tombol menu di kiri */
   .menu-btn {
     position: absolute;
     left: 15px;
@@ -35,7 +34,6 @@
     cursor: pointer;
   }
 
-  /* Judul di tengah */
   .title {
     font-weight: 600;
     font-size: 18px;
@@ -45,7 +43,7 @@
 
   .album-list {
     margin-top: 70px;
-    padding: 10px 15px 100px; /* beri ruang bawah agar tidak tertutup footer */
+    padding: 10px 15px 100px;
     perspective: 1000px;
   }
 
@@ -53,18 +51,22 @@
     display: flex;
     align-items: center;
     margin-bottom: 15px;
-    background: #fff;
     border-radius: 14px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
     padding: 10px;
     cursor: pointer;
     opacity: 0;
     transform: rotateX(90deg);
     animation: flipInBottom 0.6s ease forwards;
-    transition: transform 0.15s ease-in-out;
+    transition: transform 0.15s ease-in-out, box-shadow 0.3s ease;
+    color: #fff;
   }
 
-  /* animasi flip dari bawah */
+  .album:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  }
+
   @keyframes flipInBottom {
     from {
       opacity: 0;
@@ -78,17 +80,15 @@
     }
   }
 
-  .album:hover { transform: scale(1.02); }
-
-  .album img {
-    width: 65px; height: 65px;
-    border-radius: 12px;
-    object-fit: cover;
-  }
   .album-info { flex: 1; margin-left: 10px; }
-  .album-info h4 { margin: 0; font-size: 15px; font-weight: 600; user-select: none; pointer-events: none; }
+  .album-info h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    user-select: none;
+    pointer-events: none;
+  }
 
-  /* Sidebar */
   .sidebar {
     position: fixed; top: 0; left: -220px;
     width: 220px; height: 100%;
@@ -101,10 +101,14 @@
   .sidebar a { display: block; color: #ccc; text-decoration: none; margin: 10px 0; font-size: 15px; }
   .sidebar a:hover { color: #fff; }
 
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 15; }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    z-index: 15;
+  }
   .overlay.active { display: block; }
 
-  /* === Footer tetap di bawah layar === */
   .footer-fixed {
     position: fixed;
     bottom: 10px;
@@ -115,16 +119,16 @@
     color: #666;
     font-weight: 400;
     user-select: none;
-    pointer-events: none; /* supaya tidak ganggu klik album */
+    pointer-events: none;
     animation: fadeInFooter 1.5s ease;
-    white-space: nowrap; /* tetap satu baris */
-    font-size: clamp(10px, 2.5vw, 14px); /* otomatis mengecil di layar kecil */
+    white-space: nowrap;
+    font-size: clamp(10px, 2.5vw, 14px);
   }
 
   .footer-fixed b {
     color: #222;
     font-weight: 600;
-               }
+  }
 
   @keyframes fadeInFooter {
     from { opacity: 0; transform: translate(-50%, 20px); }
@@ -134,23 +138,19 @@
 </head>
 <body>
 
-  <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <h3>Menu</h3>
     <a href="#" onclick="openLogin()">🔐 Login Pengembang</a>
   </div>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
-  <!-- Header -->
   <header>
     <div class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</div>
     <div class="title">Galeri DKV</div>
   </header>
 
-  <!-- Album List -->
   <div class="album-list" id="albumList"></div>
 
-  <!-- Footer Tetap -->
   <div class="footer-fixed">
     <div>Teacher</div>
     <div><b>Muhammad Mujib Ridwan, S.I.Kom.</b></div>
@@ -171,6 +171,13 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // Fungsi buat warna abstrak acak (gradasi)
+    function getRandomGradient() {
+      const hue1 = Math.floor(Math.random() * 360);
+      const hue2 = (hue1 + Math.floor(Math.random() * 60) + 60) % 360;
+      return `linear-gradient(135deg, hsl(${hue1}, 70%, 55%), hsl(${hue2}, 80%, 60%))`;
+    }
 
     async function loadAlbums() {
       const albumList = document.getElementById("albumList");
@@ -195,6 +202,7 @@
               <h4>${data.name}</h4>
             </div>
           `;
+          div.style.background = getRandomGradient();
           div.style.animationDelay = `${delay}s`;
           delay += 0.1;
 
