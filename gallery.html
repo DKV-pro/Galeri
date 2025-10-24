@@ -137,21 +137,21 @@
     z-index: 101;
   }
 
-  /* ANIMASI HATI TERBANG */
+  /* ANIMASI HATI TERBANG (DIATAS IMAGE) */
   .heart-float {
-    position: fixed;
-    bottom: 80px;
-    right: 40px;
-    font-size: 22px;
-    animation: floatUp 1s ease-out forwards;
-    opacity: 0.9;
+    position: absolute;            /* penting: absolute di dalam .fullscreen */
+    font-size: 48px;               /* ukuran hati */
+    animation: floatUp 900ms ease-out forwards;
+    opacity: 0.95;
     pointer-events: none;
+    z-index: 9999;                 /* harus di atas overlay/image */
+    transform: translate(-50%, -50%);
   }
 
   @keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 1; }
-    80% { transform: translateY(-50px) scale(1.4); opacity: 0.7; }
-    100% { transform: translateY(-80px) scale(0.8); opacity: 0; }
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    60% { transform: translate(-50%, -120%) scale(1.25); opacity: 0.85; }
+    100% { transform: translate(-50%, -180%) scale(0.9); opacity: 0; }
   }
 </style>
 </head>
@@ -165,9 +165,9 @@
 <div class="gallery" id="gallery"></div>
 
 <!-- Fullscreen View -->
-<div class="fullscreen" id="fullscreen">
-  <img id="fullscreenImg">
-  <div class="like-btn" id="likeBtn">👍</div>
+<div class="fullscreen" id="fullscreen" aria-hidden="true">
+  <img id="fullscreenImg" alt="Foto">
+  <div class="like-btn" id="likeBtn" role="button" aria-pressed="false">👍</div>
   <div class="like-count" id="likeCount">0</div>
 </div>
 
@@ -199,6 +199,7 @@
   let currentIndex = 0;
   let photoList = [];
 
+  // ===== LOAD GALLERY =====
   async function loadGallery() {
     if (!albumId) {
       galleryEl.innerHTML = "<p class='error'>Album tidak ditemukan.</p>";
@@ -244,35 +245,36 @@
     }
   }
 
+  // ===== FULLSCREEN =====
   function openFullscreen(index) {
     currentIndex = index;
     fsImg.src = photoList[currentIndex];
     fullscreen.classList.add("active");
+    fullscreen.setAttribute("aria-hidden", "false");
     loadLikesForPhoto(currentIndex);
   }
 
   fullscreen.addEventListener("click", (e) => {
-    if (e.target === fullscreen) fullscreen.classList.remove("active");
+    // hanya tutup ketika klik tepat di luar gambar (overlay)
+    if (e.target === fullscreen) {
+      fullscreen.classList.remove("active");
+      fullscreen.setAttribute("aria-hidden", "true");
+    }
   });
 
-  // ==== SISTEM SWIPE MOBILE ====
-  let startX = 0;
-  let endX = 0;
-
+  // ===== SWIPE NAV =====
+  let startX = 0, endX = 0;
   fullscreen.addEventListener("touchstart", (e) => {
+    // jika user tap on likeBtn, ignore
+    if (e.target === likeBtn) return;
     startX = e.touches[0].clientX;
   });
-
   fullscreen.addEventListener("touchmove", (e) => {
     endX = e.touches[0].clientX;
   });
-
   fullscreen.addEventListener("touchend", () => {
     const diff = endX - startX;
-    if (Math.abs(diff) > 50) {
-      if (diff < 0) nextPhoto();
-      else prevPhoto();
-    }
+    if (Math.abs(diff) > 50) diff < 0 ? nextPhoto() : prevPhoto();
   });
 
   function nextPhoto() {
@@ -291,7 +293,7 @@
     }
   }
 
-  // ==== LIKE BUTTON PER FOTO ====
+  // ===== LIKE SYSTEM =====
   function getDeviceId() {
     let id = localStorage.getItem("device_id");
     if (!id) {
@@ -322,22 +324,46 @@
 
       likeCount.textContent = totalLikes;
       likeBtn.classList.toggle("active", hasLiked);
+      likeBtn.setAttribute("aria-pressed", hasLiked ? "true" : "false");
     } catch (err) {
       console.error("loadLikesForPhoto error:", err);
     }
   }
 
-  // Efek hati terbang
+  // ===== heart animation (di tengah gambar fullscreen) =====
   function showHeartAnimation() {
+    // hitung posisi tengah gambar pada layar
+    const imgRect = fsImg.getBoundingClientRect();
+    const centerX = imgRect.left + imgRect.width / 2;
+    const centerY = imgRect.top + imgRect.height / 2;
+
     const heart = document.createElement("div");
     heart.className = "heart-float";
     heart.textContent = "💙";
-    document.body.appendChild(heart);
-    setTimeout(() => heart.remove(), 1000);
+
+    // posisikan relatif terhadap .fullscreen (absolute)
+    // dapatkan bounding fullscreen
+    const fsRect = fullscreen.getBoundingClientRect();
+    // lokasi absolute inside fullscreen:
+    const left = centerX - fsRect.left;
+    const top = centerY - fsRect.top;
+
+    heart.style.left = `${left}px`;
+    heart.style.top = `${top}px`;
+
+    fullscreen.appendChild(heart);
+
+    // hapus setelah animasi selesai
+    setTimeout(() => {
+      heart.remove();
+    }, 1000);
   }
 
+  // klik like (toggle)
   async function toggleLike(e) {
+    e.preventDefault();
     e.stopPropagation();
+
     const photoId = `${albumId}_${currentIndex}`;
     const likeRef = doc(db, "likes", photoId);
 
@@ -353,22 +379,26 @@
       }
 
       if (users.includes(deviceId)) {
+        // UNLIKE
         users = users.filter(u => u !== deviceId);
         count = Math.max(0, count - 1);
         await updateDoc(likeRef, { count, users });
         hasLiked = false;
         likeBtn.classList.remove("active");
       } else {
+        // LIKE
         users.push(deviceId);
         count += 1;
         await setDoc(likeRef, { count, users });
         hasLiked = true;
         likeBtn.classList.add("active");
-        showHeartAnimation(); // 💙 animasi muncul saat like
+        // tampilkan animasi hati di tengah gambar
+        showHeartAnimation();
       }
 
       totalLikes = count;
       likeCount.textContent = totalLikes;
+      likeBtn.setAttribute("aria-pressed", hasLiked ? "true" : "false");
     } catch (err) {
       console.error("toggleLike error:", err);
     }
@@ -376,6 +406,7 @@
 
   likeBtn.addEventListener("click", toggleLike);
 
+  // ===== init =====
   loadGallery();
 </script>
 
@@ -385,5 +416,4 @@
   }
 </script>
 </body>
- </html>
- 
+</html>
