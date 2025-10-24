@@ -9,7 +9,7 @@
   body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    background: #f9f9f9;
+    background: #fff;
     color: #222;
   }
 
@@ -136,6 +136,23 @@
     user-select: none;
     z-index: 101;
   }
+
+  /* ANIMASI HATI TERBANG */
+  .heart-float {
+    position: fixed;
+    bottom: 80px;
+    right: 40px;
+    font-size: 22px;
+    animation: floatUp 1s ease-out forwards;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    80% { transform: translateY(-50px) scale(1.4); opacity: 0.7; }
+    100% { transform: translateY(-80px) scale(0.8); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -231,6 +248,7 @@
     currentIndex = index;
     fsImg.src = photoList[currentIndex];
     fullscreen.classList.add("active");
+    loadLikesForPhoto(currentIndex);
   }
 
   fullscreen.addEventListener("click", (e) => {
@@ -261,6 +279,7 @@
     if (currentIndex < photoList.length - 1) {
       currentIndex++;
       fsImg.src = photoList[currentIndex];
+      loadLikesForPhoto(currentIndex);
     }
   }
 
@@ -268,90 +287,96 @@
     if (currentIndex > 0) {
       currentIndex--;
       fsImg.src = photoList[currentIndex];
+      loadLikesForPhoto(currentIndex);
     }
   }
 
   // ==== LIKE BUTTON PER FOTO ====
-function getDeviceId() {
-  let id = localStorage.getItem("device_id");
-  if (!id) {
-    id = Math.random().toString(36).substring(2) + Date.now().toString(36);
-    localStorage.setItem("device_id", id);
-  }
-  return id;
-}
-
-const deviceId = getDeviceId();
-let hasLiked = false;
-let totalLikes = 0;
-
-// Fungsi untuk memuat like per foto
-async function loadLikesForPhoto(index) {
-  const photoId = `${albumId}_${index}`;
-  const likeRef = doc(db, "likes", photoId);
-
-  try {
-    const snap = await getDoc(likeRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      totalLikes = data.count || 0;
-      hasLiked = data.users?.includes(deviceId) || false;
-    } else {
-      totalLikes = 0;
-      hasLiked = false;
+  function getDeviceId() {
+    let id = localStorage.getItem("device_id");
+    if (!id) {
+      id = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("device_id", id);
     }
-
-    likeCount.textContent = totalLikes;
-    if (hasLiked) likeBtn.classList.add("active");
-    else likeBtn.classList.remove("active");
-  } catch (err) {
-    console.error("loadLikesForPhoto error:", err);
+    return id;
   }
-}
 
-// Toggle like hanya untuk foto yang sedang dibuka
-async function toggleLike(e) {
-  e.stopPropagation();
-  const photoId = `${albumId}_${currentIndex}`;
-  const likeRef = doc(db, "likes", photoId);
+  const deviceId = getDeviceId();
+  let hasLiked = false;
+  let totalLikes = 0;
 
-  try {
-    const snap = await getDoc(likeRef);
-    let users = [];
-    let count = 0;
+  async function loadLikesForPhoto(index) {
+    const photoId = `${albumId}_${index}`;
+    const likeRef = doc(db, "likes", photoId);
 
-    if (snap.exists()) {
-      const data = snap.data();
-      users = data.users || [];
-      count = data.count || 0;
+    try {
+      const snap = await getDoc(likeRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        totalLikes = data.count || 0;
+        hasLiked = data.users?.includes(deviceId) || false;
+      } else {
+        totalLikes = 0;
+        hasLiked = false;
+      }
+
+      likeCount.textContent = totalLikes;
+      likeBtn.classList.toggle("active", hasLiked);
+    } catch (err) {
+      console.error("loadLikesForPhoto error:", err);
     }
+  }
 
-    if (users.includes(deviceId)) {
-      users = users.filter(u => u !== deviceId);
-      count = Math.max(0, count - 1);
-      await updateDoc(likeRef, { count, users });
-      hasLiked = false;
+  // Efek hati terbang
+  function showHeartAnimation() {
+    const heart = document.createElement("div");
+    heart.className = "heart-float";
+    heart.textContent = "💙";
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 1000);
+  }
+
+  async function toggleLike(e) {
+    e.stopPropagation();
+    const photoId = `${albumId}_${currentIndex}`;
+    const likeRef = doc(db, "likes", photoId);
+
+    try {
+      const snap = await getDoc(likeRef);
+      let users = [];
+      let count = 0;
+
+      if (snap.exists()) {
+        const data = snap.data();
+        users = data.users || [];
+        count = data.count || 0;
+      }
+
+      if (users.includes(deviceId)) {
+        users = users.filter(u => u !== deviceId);
+        count = Math.max(0, count - 1);
+        await updateDoc(likeRef, { count, users });
+        hasLiked = false;
+        likeBtn.classList.remove("active");
+      } else {
+        users.push(deviceId);
+        count += 1;
+        await setDoc(likeRef, { count, users });
+        hasLiked = true;
+        likeBtn.classList.add("active");
+        showHeartAnimation(); // 💙 animasi muncul saat like
+      }
+
       totalLikes = count;
-      likeBtn.classList.remove("active");
-    } else {
-      users.push(deviceId);
-      count += 1;
-      await setDoc(likeRef, { count, users });
-      hasLiked = true;
-      totalLikes = count;
-      likeBtn.classList.add("active");
+      likeCount.textContent = totalLikes;
+    } catch (err) {
+      console.error("toggleLike error:", err);
     }
-
-    likeCount.textContent = totalLikes;
-  } catch (err) {
-    console.error("toggleLike error:", err);
   }
-}
 
-likeBtn.addEventListener("click", toggleLike);
+  likeBtn.addEventListener("click", toggleLike);
 
   loadGallery();
-  loadLikes();
 </script>
 
 <script>
@@ -360,4 +385,5 @@ likeBtn.addEventListener("click", toggleLike);
   }
 </script>
 </body>
-</html>
+ </html>
+ 
