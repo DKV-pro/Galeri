@@ -230,7 +230,7 @@ albums.sort((a, b) => {
 });
 
         let delay = 0;
-        querySnapshot.forEach((doc) => {
+        albums.forEach((album) => {
           const data = doc.data();
           const div = document.createElement("div");
           const totalFoto = (data.photos || []).length;
