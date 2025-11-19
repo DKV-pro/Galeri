@@ -190,7 +190,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 🎨 Gradasi abstrak gelap & halus untuk latar album
+    
     function getDarkSmoothGradient() {
       const hue1 = Math.floor(Math.random() * 360);
       const hue2 = (hue1 + Math.floor(Math.random() * 30) + 30) % 360;
@@ -213,6 +213,21 @@
           albumList.innerHTML = "<p style='text-align:center;color:#aaa;'>Belum ada album ditambahkan.</p>";
           return;
         }
+     
+let albums = [];
+querySnapshot.forEach((docSnap) => {
+  const data = docSnap.data();
+  albums.push({
+    id: docSnap.id,
+    name: data.name || "",
+    photos: data.photos || [],
+    total: (data.photos || []).length
+  });
+});
+albums.sort((a, b) => {
+  if (b.total !== a.total) return b.total - a.total;
+  return a.name.localeCompare(b.name);
+});
 
         let delay = 0;
         querySnapshot.forEach((doc) => {
@@ -222,9 +237,9 @@
           div.className = "album";
 div.innerHTML = `
   <div class="album-info">
-    <h4>${data.name}</h4>
+    <h4>${album.name}</h4>
     <div style="font-size:13px; opacity:0.8; margin-top:2px;">
-      ${totalFoto} foto
+      ${album.total} foto
     </div>
   </div>
 `;
