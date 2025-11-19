@@ -248,7 +248,7 @@ div.innerHTML = `
           div.style.animationDelay = `${delay}s`;
           delay += 0.1;
 
-          div.onclick = () => window.location.href = `gallery.html?id=${doc.id}`;
+          div.onclick = () => window.location.href = `gallery.html?id=${album.id}`;
           albumList.appendChild(div);
         });
       } catch (e) {
