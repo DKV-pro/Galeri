@@ -218,12 +218,17 @@
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const div = document.createElement("div");
+          const totalFoto = (data.photos || []).length;
           div.className = "album";
-          div.innerHTML = `
-            <div class="album-info">
-              <h4>${data.name}</h4>
-            </div>
-          `;
+div.innerHTML = `
+  <div class="album-info">
+    <h4>${data.name}</h4>
+    <div style="font-size:13px; opacity:0.8; margin-top:2px;">
+      ${totalFoto} foto
+    </div>
+  </div>
+`;
+         
           div.style.background = getDarkSmoothGradient();
           div.style.animationDelay = `${delay}s`;
           delay += 0.1;
