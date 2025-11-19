@@ -230,27 +230,26 @@ albums.sort((a, b) => {
 });
 
         let delay = 0;
-        albums.forEach((album) => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          const totalFoto = (data.photos || []).length;
-          div.className = "album";
-div.innerHTML = `
-  <div class="album-info">
-    <h4>${album.name}</h4>
-    <div style="font-size:13px; opacity:0.8; margin-top:2px;">
-      ${album.total} foto
-    </div>
-  </div>
-`;
-         
-          div.style.background = getDarkSmoothGradient();
-          div.style.animationDelay = `${delay}s`;
-          delay += 0.1;
+albums.forEach((album) => {
+  const div = document.createElement("div");
+  div.className = "album";
 
-          div.onclick = () => window.location.href = `gallery.html?id=${album.id}`;
-          albumList.appendChild(div);
-        });
+  div.innerHTML = `
+    <div class="album-info">
+      <h4>${album.name}</h4>
+      <div style="font-size:13px; opacity:0.8; margin-top:2px;">
+        ${album.total} foto
+      </div>
+    </div>
+  `;
+
+  div.style.background = getDarkSmoothGradient();
+  div.style.animationDelay = `${delay}s`;
+  delay += 0.1;
+
+  div.onclick = () => window.location.href = `gallery.html?id=${album.id}`;
+  albumList.appendChild(div);
+});
       } catch (e) {
         console.error(e);
         albumList.innerHTML = "<p style='text-align:center;color:red;'>Gagal memuat data Firestore.</p>";
